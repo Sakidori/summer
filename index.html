@@ -289,7 +289,7 @@
     <script>
         // --- Configuration for GitHub API ---
         const GITHUB_CONFIG = {
-            owner: 'Karamucho-Calvin',
+            owner: 'Sakidori',
             repo: 'summer',
             folderPath: 'student_submissions', 
             token: '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' 
@@ -327,7 +327,7 @@
                 reader.onload = () => targetZone.innerHTML = `<img src="${reader.result}" alt="Uploaded">`;
                 reader.readAsDataURL(file);
             } else {
-                alert('Please drop or select a valid image file.');
+                alert('有効な画像ファイルをドラッグ＆ドロップまたは選択してください。');
             }
         }
 
@@ -394,12 +394,12 @@
 
                 await uploadToGitHub(filename, base64Content, name);
                 
-                alert("Success! Your board has been submitted to the teacher.");
+                alert("成功！ボードの送信が完了しました。");
                 closeModal();
                 
             } catch (error) {
                 console.error(error);
-                alert("There was an error sending your file. Please check the setup or try again.");
+                alert("ファイルの送信中にエラーが発生しました。もう一度お試しください。");
                 submitBtn.disabled = false;
                 loadingMsg.style.display = 'none';
             }
