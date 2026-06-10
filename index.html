@@ -347,63 +347,24 @@
         }
 
        // --- Submission Logic ---
-        async function handleSubmission() {
-            const name = document.getElementById('studentName').value.trim();
-            const year = parseInt(document.getElementById('studentYear').value);
-            const sClass = parseInt(document.getElementById('studentClass').value);
+        async function uploadToDrive(filename, base64Image, studentName) {
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzq7qii8u707TgzkvmjUUC1xIcZ7yMwrKiwQb2hkMVSKa7RoIc16BWf1bzlKZM2hBxz/exec";
 
-            if (!name || isNaN(year) || isNaN(sClass)) {
-                alert("すべての項目に正しい数字を入力してください。");
-                return;
-            }
+    const formData = new FormData();
+    formData.append('base64Data', base64Image);
+    formData.append('mimeType', 'image/png');
+    formData.append('filename', filename);
 
-            // Strict validation for numbers between 1 and 3
-            if (year < 1 || year > 3) {
-                alert("学年は 1 から 3 の間で入力してください。");
-                return;
-            }
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: formData
+    });
 
-            if (sClass < 1 || sClass > 6) {
-                alert("クラスは 1 から 6 の間で入力してください。");
-                return;
-            }
-
-            const isConfirmed = confirm(`${name}さん、ボードを提出しますか？送信後の編集はできません。`);
-            if (!isConfirmed) return;
-
-            submitBtn.disabled = true;
-            loadingMsg.style.display = 'block';
-
-            const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const safeClass = sClass.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const safeYear = year.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const filename = `${safeClass}_${safeYear}_${safeName}_${Date.now()}.png`;
-
-            try {
-                const board = document.getElementById('board');
-                board.classList.add('exporting'); 
-                
-                const canvas = await html2canvas(board, {
-                    scale: 2,
-                    backgroundColor: null
-                });
-                board.classList.remove('exporting');
-
-                const dataUrl = canvas.toDataURL('image/png');
-                const base64Content = dataUrl.split(',')[1]; 
-
-                await uploadToGitHub(filename, base64Content, name);
-                
-                alert("成功！ボードの送信が完了しました。");
-                closeModal();
-                
-            } catch (error) {
-                console.error(error);
-                alert("ファイルの送信中にエラーが発生しました。もう一度お試しください。");
-                submitBtn.disabled = false;
-                loadingMsg.style.display = 'none';
-            }
-        }
+    const result = await response.json();
+    if (result.result !== '成功') {
+        throw new Error(result.message || '送信に失敗しました。もう一度お試しください。');
+    }
+}
 
         // --- GitHub API Upload Function ---
         async function uploadToGitHub(filename, base64Image, studentName) {
