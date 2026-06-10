@@ -287,14 +287,6 @@
     </div>
 
     <script>
-        // --- Configuration for GitHub API ---
-        const GITHUB_CONFIG = {
-            owner: 'Sakidori',
-            repo: 'summer',
-            folderPath: 'student_submissions', 
-            token: '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' 
-        };
-
         // --- Drag/Drop & Click to Upload Logic ---
         const dropZones = document.querySelectorAll('.drop-zone');
         dropZones.forEach(zone => {
@@ -347,47 +339,84 @@
         }
 
        // --- Submission Logic ---
+        async function handleSubmission() {
+            const name = document.getElementById('studentName').value.trim();
+            const year = parseInt(document.getElementById('studentYear').value);
+            const sClass = parseInt(document.getElementById('studentClass').value);
+
+            if (!name || isNaN(year) || isNaN(sClass)) {
+                alert("すべての項目に正しい数字を入力してください。");
+                return;
+            }
+
+            // Strict validation for numbers between 1 and 3
+            if (year < 1 || year > 3) {
+                alert("学年は 1 から 3 の間で入力してください。");
+                return;
+            }
+
+            if (sClass < 1 || sClass > 6) {
+                alert("クラスは 1 から 6 の間で入力してください。");
+                return;
+            }
+
+            const isConfirmed = confirm(`${name}さん、ボードを提出しますか？送信後の編集はできません。`);
+            if (!isConfirmed) return;
+
+            submitBtn.disabled = true;
+            loadingMsg.style.display = 'block';
+
+            const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const safeClass = sClass.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const safeYear = year.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const filename = `${safeClass}_${safeYear}_${safeName}_${Date.now()}.png`;
+
+            try {
+                const board = document.getElementById('board');
+                board.classList.add('exporting'); 
+                
+                const canvas = await html2canvas(board, {
+                    scale: 2,
+                    backgroundColor: null
+                });
+                board.classList.remove('exporting');
+
+                const dataUrl = canvas.toDataURL('image/png');
+                const base64Content = dataUrl.split(',')[1]; 
+
+                // FIX: Send to Google Drive instead of the blocked GitHub API
+                await uploadToDrive(filename, base64Content, name);
+                
+                alert("Success! Your board has been submitted to the teacher.");
+                closeModal();
+                
+            } catch (error) {
+                console.error(error);
+                alert("There was an error sending your file. Please check the setup or try again.");
+                submitBtn.disabled = false;
+                loadingMsg.style.display = 'none';
+            }
+        }
+
+        // --- Google Drive Upload Function ---
         async function uploadToDrive(filename, base64Image, studentName) {
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzq7qii8u707TgzkvmjUUC1xIcZ7yMwrKiwQb2hkMVSKa7RoIc16BWf1bzlKZM2hBxz/exec";
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzq7qii8u707TgzkvmjUUC1xIcZ7yMwrKiwQb2hkMVSKa7RoIc16BWf1bzlKZM2hBxz/exec";
 
-    const formData = new FormData();
-    formData.append('base64Data', base64Image);
-    formData.append('mimeType', 'image/png');
-    formData.append('filename', filename);
+            const formData = new FormData();
+            formData.append('base64Data', base64Image);
+            formData.append('mimeType', 'image/png');
+            formData.append('filename', filename);
 
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        body: formData
-    });
-
-    const result = await response.json();
-    if (result.result !== '成功') {
-        throw new Error(result.message || '送信に失敗しました。もう一度お試しください。');
-    }
-}
-
-        // --- GitHub API Upload Function ---
-        async function uploadToGitHub(filename, base64Image, studentName) {
-            const path = `${GITHUB_CONFIG.folderPath}/${filename}`;
-            const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}`;
-
-            const payload = {
-                message: `New submission from ${studentName}`,
-                content: base64Image
-            };
-
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to upload to GitHub');
+            const result = await response.json();
+            
+            // FIX: Changed from '成功' to 'success' to match Apps Script JSON response
+            if (result.result !== 'success') {
+                throw new Error(result.message || '送信に失敗しました。もう一度お試しください。');
             }
         }
     </script>
