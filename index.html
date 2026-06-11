@@ -47,17 +47,19 @@
         .emoji-palm {
             position: absolute;
             top: 70%;
-            left: -50px;
-            font-size: 380px;
+            left: -20px;
+            width: 350px;
+            height: auto;
             opacity: 0.15;
             transform: translateY(-50%);
         }
 
         .emoji-sun {
             position: absolute;
-            top: 25%;
+            top: 10%;
             right: 5%;
-            font-size: 120px;
+            width: 120px;
+            height: auto;
             opacity: 0.2;
         }
 
@@ -186,7 +188,7 @@
             overflow: hidden;
         }
 
-        /* --- Hidden Submission Template Styles (Added Title + Moved Sun Right) --- */
+        /* --- Hidden Submission Template Styles --- */
         #submission-template {
             position: absolute;
             top: -9999px;
@@ -216,22 +218,22 @@
         #submission-template .emoji-palm {
             position: absolute;
             top: 70%;
-            left: -50px;
-            font-size: 380px;
+            left: -20px;
+            width: 350px;
+            height: auto;
             opacity: 0.15;
             transform: translateY(-50%);
         }
 
-        /* Sun moved further to the right (right: 3%) */
         #submission-template .emoji-sun {
             position: absolute;
-            top: 25%;
+            top: 10%;
             right: 3%;
-            font-size: 120px;
+            width: 120px;
+            height: auto;
             opacity: 0.2;
         }
 
-        /* Template Title Specific Styling */
         #submission-template h1 {
             margin: 0 0 25px 0;
             font-size: 42px;
@@ -275,23 +277,17 @@
             height: 150px;
             background-color: #f8f9fa;
             border: 2px dashed #ced4da;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
             overflow: hidden;
             box-sizing: border-box;
+            /* Forces image proportional rendering without stretching */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        #template-board .drop-zone img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0; left: 0;
-        }
-
-        #template-board .drop-zone:not(:has(img)) {
+        /* Empty fallback for template slots */
+        #template-board .drop-zone:not([style*="background-image"]) {
             background-color: black !important;
         }
 
@@ -424,13 +420,13 @@
             }
 
             .emoji-palm {
-                font-size: 250px;
+                width: 250px;
                 left: -40px;
                 top: 80%;
             }
 
             .emoji-sun {
-                font-size: 80px;
+                width: 80px;
                 top: 10%;
                 right: 2%;
             }
@@ -442,8 +438,8 @@
     <button class="primary-btn top-left-btn" onclick="location.href='gallery.html'">📸 Photo Gallery</button>
 
     <div class="emoji-decorations">
-        <span class="emoji-palm">🌴</span>
-        <span class="emoji-sun">☀️</span>
+        <img src="https://cdn-icons-png.flaticon.com/512/616/616484.png" class="emoji-palm" alt="Palm Tree">
+        <img src="https://cdn-icons-png.flaticon.com/512/869/869869.png" class="emoji-sun" alt="Sun">
     </div>
 
     <h1>My Summer Photo Diary</h1>
@@ -482,8 +478,8 @@
 
     <div id="submission-template">
         <div class="emoji-decorations">
-            <span class="emoji-palm">🌴</span>
-            <span class="emoji-sun">☀️</span>
+            <img src="https://cdn-icons-png.flaticon.com/512/616/616484.png" class="emoji-palm" alt="Palm Tree">
+            <img src="https://cdn-icons-png.flaticon.com/512/869/869869.png" class="emoji-sun" alt="Sun">
         </div>
         <h1>My Summer Photo Diary</h1>
         <div id="template-board">
@@ -566,7 +562,7 @@
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = () => {
-                    // Update visible UI
+                    // Update visible UI with img tag (object-fit cover works fine here)
                     targetZone.innerHTML = `<img src="${reader.result}" alt="Uploaded">`;
                     
                     // Sync file input
@@ -575,10 +571,10 @@
                     dataTransfer.items.add(file);
                     fileInput.files = dataTransfer.files;
 
-                    // Sync hidden template zone simultaneously
+                    // Sync hidden template zone simultaneously via background image to avoid stretch
                     const templateZones = document.querySelectorAll('#submission-template .drop-zone');
                     if (templateZones[index]) {
-                        templateZones[index].innerHTML = `<img src="${reader.result}" alt="Uploaded">`;
+                        templateZones[index].style.backgroundImage = `url(${reader.result})`;
                     }
                 };
                 reader.readAsDataURL(file);
@@ -670,7 +666,7 @@
                 // 3. UPLOAD BOARD SCREENSHOT
                 await uploadToDrive(boardFilename, base64Board, 'image/png', targetFolder);
                 
-                alert("成功！個々の写真とボードが送信されました。");
+                alert("成功！ボードが送信されました。");
                 closeModal();
                 
             } catch (error) {
