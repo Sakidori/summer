@@ -26,6 +26,13 @@
             position: relative;
         }
 
+        .top-left-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
         .emoji-decorations {
             position: absolute;
             top: 0;
@@ -272,34 +279,48 @@
                 justify-content: flex-start;
                 padding: 20px 10px;
             }
+
+            button.primary-btn.top-left-btn {
+                position: static;
+                margin-bottom: 20px;
+                width: 90%;
+            }
+
             .controls {
                 margin-bottom: 20px;
             }
+
             h1 {
                 font-size: 26px;
                 margin-top: 10px;
             }
+
             #board {
                 padding: 15px;
                 gap: 15px;
                 width: 100%;
             }
+
             .polaroid {
                 width: 140px;
                 padding: 10px 10px 15px 10px;
             }
+
             .drop-zone {
                 height: 120px;
                 font-size: 11px;
             }
+
             .title-text {
                 font-size: 13px;
             }
+
             .emoji-palm {
                 font-size: 250px;
                 left: -40px;
                 top: 80%;
             }
+
             .emoji-sun {
                 font-size: 80px;
                 top: 10%;
@@ -310,13 +331,13 @@
 </head>
 <body>
 
+    <button class="primary-btn top-left-btn" onclick="location.href='gallery.html'">📸 Photo Gallery</button>
+
     <div class="emoji-decorations">
         <span class="emoji-palm">🌴</span>
         <span class="emoji-sun">☀️</span>
     </div>
-    <div>
-    <button onclick="location.href='gallery.html'" class="nav-btn">📸 Go to Summer Gallery</button>
-    </div>
+
     <h1>My Summer Photo Diary</h1>
 
     <div id="board">
