@@ -151,6 +151,20 @@
             padding: 0;
         }
         .heart-btn:active { transform: scale(1.2); }
+
+        .delete-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 15px;
+            font-weight: bold;
+            width: 100%;
+        }
+        .delete-btn:hover { background: #c23616; }
         
         #loading-txt {
             display: none;
@@ -180,23 +194,23 @@
     <div id="gallery-grid"></div>
 
     <script>
-        // --- TODO: REPLACE WITH YOUR FIREBASE CONFIG ---
+        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
-  apiKey: "AIzaSyBxk_492uH0vJLr-iijocmRHjnvx9eLXY4",
-  authDomain: "summer-diary-8e0b6.firebaseapp.com",
-  databaseURL: "https://summer-diary-8e0b6-default-rtdb.firebaseio.com",
-  projectId: "summer-diary-8e0b6",
-  storageBucket: "summer-diary-8e0b6.firebasestorage.app",
-  messagingSenderId: "598705676339",
-  appId: "1:598705676339:web:860622afb519acd93a8346"
-};
+            apiKey: "AIzaSyBxk_492uH0vJLr-iijocmRHjnvx9eLXY4",
+            authDomain: "summer-diary-8e0b6.firebaseapp.com",
+            databaseURL: "https://summer-diary-8e0b6-default-rtdb.firebaseio.com",
+            projectId: "summer-diary-8e0b6",
+            storageBucket: "summer-diary-8e0b6.firebasestorage.app",
+            messagingSenderId: "598705676339",
+            appId: "1:598705676339:web:860622afb519acd93a8346"
+        };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         // Simple Admin Passcode
-        const ADMIN_PASSCODE = "admin123"; // Change this to your preferred passcode
+        const ADMIN_PASSCODE = "Sowhat"; // Change this to your preferred passcode
 
         // Check login state on load to persist view
         if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
@@ -214,6 +228,7 @@
                 document.getElementById('adminPanel').style.display = 'none';
                 document.getElementById('authBtn').innerText = 'Admin Login';
                 document.getElementById('authBtn').className = 'login-btn';
+                location.reload(); // Refresh to hide delete buttons immediately
             } else {
                 // Login
                 const entered = prompt("Enter admin passcode:");
@@ -222,6 +237,7 @@
                     document.getElementById('adminPanel').style.display = 'flex';
                     document.getElementById('authBtn').innerText = 'Logout';
                     document.getElementById('authBtn').className = 'logout-btn';
+                    location.reload(); // Refresh to show delete buttons immediately
                 } else if (entered !== null) {
                     alert("Incorrect passcode!");
                 }
@@ -240,11 +256,16 @@
                     return;
                 }
 
+                // Check if admin is logged in to conditionally display delete buttons
+                const isAdmin = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+
                 snapshot.forEach((doc) => {
                     const item = doc.data();
                     const card = document.createElement('div');
                     card.className = 'gallery-item';
-                    card.innerHTML = `
+                    
+                    // Build the card HTML dynamically
+                    let cardContent = `
                         <img src="${item.src}" alt="Gallery Image">
                         <div class="item-title">${item.title}</div>
                         <div class="like-container">
@@ -252,6 +273,13 @@
                             <span>${item.likes} Likes</span>
                         </div>
                     `;
+
+                    // Append delete button only if admin is logged in
+                    if (isAdmin) {
+                        cardContent += `<button class="delete-btn" onclick="deletePhoto('${doc.id}')">🗑️ Delete Picture</button>`;
+                    }
+
+                    card.innerHTML = cardContent;
                     grid.appendChild(card);
                 });
             });
@@ -300,27 +328,37 @@
         }
 
         async function likeItem(docId, currentLikes) {
-            // Retrieve previously liked photos by this specific browser/device
             let likedPhotos = JSON.parse(localStorage.getItem('likedPhotos')) || [];
 
-            // Prevent repeat likes
             if (likedPhotos.includes(docId)) {
                 alert("あなたは既にこの写真に「いいね！」をしました！");
                 return;
             }
 
             try {
-                // Increment like counter in Firebase
                 await db.collection("summerPictures").doc(docId).update({
                     likes: currentLikes + 1
                 });
 
-                // Save locally so they can't click it again
                 likedPhotos.push(docId);
                 localStorage.setItem('likedPhotos', JSON.stringify(likedPhotos));
-                
             } catch (err) {
                 console.error("Error updating like:", err);
+            }
+        }
+
+        // --- Deletion Logic ---
+        async function deletePhoto(docId) {
+            if (!confirm("Are you sure you want to permanently delete this picture?")) {
+                return;
+            }
+
+            try {
+                await db.collection("summerPictures").doc(docId).delete();
+                alert("Picture deleted successfully.");
+            } catch (err) {
+                console.error("Error deleting picture:", err);
+                alert("Failed to delete the picture.");
             }
         }
     </script>
