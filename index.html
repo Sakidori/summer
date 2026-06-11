@@ -16,13 +16,13 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* Perfectly centers on PC */
+            justify-content: center;
             padding: 10px;
             margin: 0;
             width: 100vw;
-            height: 100vh; /* Locks to screen height on PC */
+            height: 100vh;
             box-sizing: border-box;
-            overflow: hidden; /* Prevents scrolling on PC */
+            overflow: hidden;
             position: relative;
         }
 
@@ -187,14 +187,13 @@
             font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
             font-size: 15px;
             color: #000;
-            user-select: none; /* Prevents text from being highlighted accidentally */
+            user-select: none;
             
-            /* Multi-line wrapping rules */
             white-space: normal; 
             word-wrap: break-word;
             overflow-wrap: break-word;
             line-height: 1.2;
-            max-height: 2.4em; /* Allows up to 2 lines of text */
+            max-height: 2.4em;
             overflow: hidden;
         }
 
@@ -270,12 +269,11 @@
             margin-top: 15px;
         }
 
-        /* --- Smartphone Optimizations (Screens < 768px) --- */
         @media (max-width: 768px) {
             body {
-                height: auto; /* Allow height to expand */
+                height: auto;
                 min-height: 100vh;
-                overflow-y: auto; /* Enable scrolling on mobile */
+                overflow-y: auto;
                 justify-content: flex-start;
                 padding: 20px 10px;
             }
@@ -430,7 +428,6 @@
                 reader.onload = () => {
                     targetZone.innerHTML = `<img src="${reader.result}" alt="Uploaded">`;
                     
-                    // Attach the file to the hidden input so it can be found during submission
                     const fileInput = targetZone.parentElement.querySelector('.file-input');
                     const dataTransfer = new DataTransfer();
                     dataTransfer.items.add(file);
@@ -488,19 +485,21 @@
             const safeClass = sClass.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
             const safeYear = year.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
             
-            const boardFilename = `${safeYear}-${safeClass}_${safeName}_board_${Date.now()}.png`;
+            const targetFolder = `${safeYear}-${safeClass}_${safeName}`;
+            const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
 
             try {
-                // 1. UPLOAD INDIVIDUAL IMAGES FIRST
+                // 1. COMPRESS & UPLOAD INDIVIDUAL IMAGES
                 const polaroids = document.querySelectorAll('.polaroid');
                 for (let i = 0; i < polaroids.length; i++) {
                     const fileInput = polaroids[i].querySelector('.file-input');
                     const file = fileInput.files[0];
                     if (file) {
-                        const base64Individual = await fileToBase64(file);
+                        // Compress image to max 1000px resolution to speed up transfer
+                        const base64Individual = await compressImage(file, 1000, 1000);
                         const ext = file.name.split('.').pop() || 'png';
-                        const indFilename = `${safeYear}-${safeClass}_${safeName}_photo_${i + 1}_${Date.now()}.${ext}`;
-                        await uploadToDrive(indFilename, base64Individual, file.type);
+                        const indFilename = `${targetFolder}_photo_${i + 1}_${Date.now()}.${ext}`;
+                        await uploadToDrive(indFilename, base64Individual, 'image/jpeg', targetFolder);
                     }
                 }
 
@@ -523,13 +522,13 @@
                 if (controls) controls.style.display = 'flex';
                 board.classList.remove('exporting');
 
-                const dataUrl = canvas.toDataURL('image/png');
+                const dataUrl = canvas.toDataURL('image/png', 0.8); // Compress canvas slightly
                 const base64Board = dataUrl.split(',')[1]; 
 
-                // 3. UPLOAD BOARD SCREENSHOT TO DRIVE
-                await uploadToDrive(boardFilename, base64Board, 'image/png');
+                // 3. COMPRESS & UPLOAD BOARD SCREENSHOT
+                await uploadToDrive(boardFilename, base64Board, 'image/png', targetFolder);
                 
-                alert("成功！ボードが送信されました。");
+                alert("成功！個々の写真とボードが送信されました。");
                 closeModal();
                 
             } catch (error) {
@@ -547,24 +546,55 @@
             }
         }
 
-        // Helper to convert file to base64 string
-        function fileToBase64(file) {
+        // --- Helper: Compress Image via Canvas ---
+        function compressImage(file, maxWidth, maxHeight) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
                 reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convert to Base64 (JPEG, Quality: 0.75)
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                        resolve(dataUrl.split(',')[1]);
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
             });
         }
 
-        // --- Google Drive Upload Function ---
-        async function uploadToDrive(filename, base64Data, mimeType) {
+        // --- Google Drive Upload Function with Folder Support ---
+        async function uploadToDrive(filename, base64Data, mimeType, folderName) {
             const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyb6ICqHNKpzv6zcNSxVTYVyIA7xvq3_w2miTuONTci4yNVEERsz3aLSkU3L0Mkoj9S/exec";
 
             const formData = new FormData();
             formData.append('base64Data', base64Data);
             formData.append('mimeType', mimeType);
             formData.append('filename', filename);
+            formData.append('folderName', folderName); // Pass the intended subfolder name
 
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
