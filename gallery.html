@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summer Gallery</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(120deg, #fbc531 0%, #e84118 100%);
+            background-attachment: fixed;
+            background-size: cover;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            text-align: center;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .nav-links {
+            margin-bottom: 25px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: underline;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .login-section {
+            margin-bottom: 25px;
+        }
+
+        .login-btn, .logout-btn {
+            background: #0097e6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .logout-btn { background: #e84118; }
+
+        /* --- Admin Upload Panel (Hidden by default) --- */
+        .admin-panel {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .admin-panel h3 { margin: 0 0 10px 0; text-align: center; }
+        .admin-panel input[type="text"], 
+        .admin-panel input[type="file"] {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .upload-btn {
+            background: #4cd137;
+            color: white;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-btn:hover { background: #44af2f; }
+        .upload-btn:disabled { background: #666; cursor: wait; }
+
+        /* --- Gallery Grid --- */
+        #gallery-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .gallery-item {
+            background: white;
+            padding: 15px 15px 25px 15px;
+            border-radius: 2px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            width: 200px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: rotate(1deg);
+            margin-bottom: 10px;
+        }
+
+        .gallery-item img {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border: 1px solid #eee;
+        }
+
+        .item-title {
+            margin-top: 15px;
+            font-family: 'Comic Sans MS', cursive;
+            font-size: 16px;
+            text-align: center;
+            width: 100%;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .like-container {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .heart-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #ff4757;
+            transition: transform 0.1s;
+            padding: 0;
+        }
+        .heart-btn:active { transform: scale(1.2); }
+        
+        #loading-txt {
+            display: none;
+            font-weight: bold;
+            color: #fbc531;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📸 Summer Photo Gallery</h1>
+    <div class="nav-links"><a href="index.html">← Back to Diary Board</a></div>
+
+    <div class="login-section">
+        <button class="login-btn" id="authBtn" onclick="toggleAuth()">Admin Login</button>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+        <h3>Admin Upload</h3>
+        <input type="text" id="imageTitle" placeholder="Enter picture caption...">
+        <input type="file" id="imageFile" accept="image/*">
+        <button class="upload-btn" id="uploadBtn" onclick="uploadImage()">Upload Picture</button>
+        <div id="loading-txt">Uploading to cloud... Please wait...</div>
+    </div>
+
+    <div id="loading-gal" style="text-align: center;">Loading gallery from cloud...</div>
+    <div id="gallery-grid"></div>
+
+    <script>
+        // --- TODO: REPLACE WITH YOUR FIREBASE CONFIG ---
+        const firebaseConfig = {
+  apiKey: "AIzaSyBxk_492uH0vJLr-iijocmRHjnvx9eLXY4",
+  authDomain: "summer-diary-8e0b6.firebaseapp.com",
+  databaseURL: "https://summer-diary-8e0b6-default-rtdb.firebaseio.com",
+  projectId: "summer-diary-8e0b6",
+  storageBucket: "summer-diary-8e0b6.firebasestorage.app",
+  messagingSenderId: "598705676339",
+  appId: "1:598705676339:web:860622afb519acd93a8346"
+};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Simple Admin Passcode
+        const ADMIN_PASSCODE = "admin123"; // Change this to your preferred passcode
+
+        // Check login state on load to persist view
+        if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+            document.getElementById('adminPanel').style.display = 'flex';
+            document.getElementById('authBtn').innerText = 'Logout';
+            document.getElementById('authBtn').className = 'logout-btn';
+        }
+
+        function toggleAuth() {
+            const isLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+            
+            if (isLoggedIn) {
+                // Logout
+                sessionStorage.removeItem('isAdminLoggedIn');
+                document.getElementById('adminPanel').style.display = 'none';
+                document.getElementById('authBtn').innerText = 'Admin Login';
+                document.getElementById('authBtn').className = 'login-btn';
+            } else {
+                // Login
+                const entered = prompt("Enter admin passcode:");
+                if (entered === ADMIN_PASSCODE) {
+                    sessionStorage.setItem('isAdminLoggedIn', 'true');
+                    document.getElementById('adminPanel').style.display = 'flex';
+                    document.getElementById('authBtn').innerText = 'Logout';
+                    document.getElementById('authBtn').className = 'logout-btn';
+                } else if (entered !== null) {
+                    alert("Incorrect passcode!");
+                }
+            }
+        }
+
+        // Real-time synchronization of gallery
+        db.collection("summerPictures").orderBy("timestamp", "desc")
+            .onSnapshot((snapshot) => {
+                const grid = document.getElementById('gallery-grid');
+                document.getElementById('loading-gal').style.display = 'none';
+                grid.innerHTML = '';
+
+                if (snapshot.empty) {
+                    grid.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.7);">No pictures in the gallery yet.</p>';
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const item = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'gallery-item';
+                    card.innerHTML = `
+                        <img src="${item.src}" alt="Gallery Image">
+                        <div class="item-title">${item.title}</div>
+                        <div class="like-container">
+                            <button class="heart-btn" onclick="likeItem('${doc.id}', ${item.likes})">❤️</button>
+                            <span>${item.likes} Likes</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            });
+
+        async function uploadImage() {
+            const titleInput = document.getElementById('imageTitle');
+            const fileInput = document.getElementById('imageFile');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const loadingTxt = document.getElementById('loading-txt');
+
+            const title = titleInput.value.trim() || 'Untitled';
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select an image file first.');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            loadingTxt.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const newPhoto = {
+                        src: e.target.result,
+                        title: title,
+                        likes: 0,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    await db.collection("summerPictures").add(newPhoto);
+                    
+                    // Reset fields
+                    titleInput.value = '';
+                    fileInput.value = '';
+                } catch (err) {
+                    console.error("Error uploading:", err);
+                    alert("Upload failed. Check your Firebase rules and storage quota.");
+                } finally {
+                    uploadBtn.disabled = false;
+                    loadingTxt.style.display = 'none';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function likeItem(docId, currentLikes) {
+            // Retrieve previously liked photos by this specific browser/device
+            let likedPhotos = JSON.parse(localStorage.getItem('likedPhotos')) || [];
+
+            // Prevent repeat likes
+            if (likedPhotos.includes(docId)) {
+                alert("あなたは既にこの写真に「いいね！」をしました！");
+                return;
+            }
+
+            try {
+                // Increment like counter in Firebase
+                await db.collection("summerPictures").doc(docId).update({
+                    likes: currentLikes + 1
+                });
+
+                // Save locally so they can't click it again
+                likedPhotos.push(docId);
+                localStorage.setItem('likedPhotos', JSON.stringify(likedPhotos));
+                
+            } catch (err) {
+                console.error("Error updating like:", err);
+            }
+        }
+    </script>
+</body>
+</html>
