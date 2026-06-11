@@ -26,13 +26,6 @@
             position: relative;
         }
 
-        /* Elements hidden strictly during the screenshot export */
-        body.exporting .top-left-btn,
-        body.exporting .controls,
-        body.exporting .modal-overlay {
-            display: none !important;
-        }
-
         .top-left-btn {
             position: absolute;
             top: 20px;
@@ -177,14 +170,14 @@
             pointer-events: none;
         }
 
-        /* Set empty slot backgrounds to black during export */
-        body.exporting .drop-zone:not(:has(img)) {
+        /* Empty slot styling during export */
+        .exporting .drop-zone:not(:has(img)) {
             background-color: black !important;
             color: transparent !important;
             border: none;
         }
         
-        body.exporting .drop-zone:not(:has(img)) .click-hint {
+        .exporting .drop-zone:not(:has(img)) .click-hint {
             display: none;
         }
 
@@ -516,15 +509,24 @@
                 // Fire all individual image uploads concurrently
                 await Promise.all(uploadPromises);
 
-                // 2. PREPARE SCREENSHOT (Hides unwanted buttons seamlessly)
-                document.body.classList.add('exporting'); 
+                // 2. SCREENSHOT THE BOARD
+                const board = document.getElementById('board');
+                board.classList.add('exporting'); 
 
+                const controls = document.querySelector('.controls');
+                if (controls) controls.style.display = 'none';
+
+                const modal = document.getElementById('studentModal');
+                modal.classList.remove('active'); 
+                
                 const canvas = await html2canvas(document.body, {
                     scale: 1.5,
                     backgroundColor: null
                 });
                 
-                document.body.classList.remove('exporting');
+                modal.classList.add('active'); 
+                if (controls) controls.style.display = 'flex';
+                board.classList.remove('exporting');
 
                 const dataUrl = canvas.toDataURL('image/png', 0.8);
                 const base64Board = dataUrl.split(',')[1]; 
@@ -532,11 +534,16 @@
                 // 3. UPLOAD BOARD SCREENSHOT
                 await uploadToDrive(boardFilename, base64Board, 'image/png', targetFolder);
                 
-                alert("成功！ボードが送信されました。");
+                alert("成功！個々の写真とボードが送信されました。");
                 closeModal();
                 
             } catch (error) {
-                document.body.classList.remove('exporting');
+                const controls = document.querySelector('.controls');
+                if (controls) controls.style.display = 'flex';
+                const modal = document.getElementById('studentModal');
+                if (modal) modal.classList.add('active');
+                const board = document.getElementById('board');
+                if (board) board.classList.remove('exporting');
                 
                 console.error(error);
                 alert("送信に失敗しました。もう一度お試しください。");
