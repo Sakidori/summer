@@ -193,7 +193,7 @@
             overflow: hidden;
         }
 
-        /* --- Locked Absolute Submission Template --- */
+        /* --- Reliably Hidden Submission Template (Safe Off-Screen) --- */
         #submission-template {
             position: absolute;
             top: -9999px;
@@ -235,28 +235,30 @@
             opacity: 0.2;
         }
 
-        /* Explicitly locked title placement */
+        /* Explicitly aligned absolute coordinates for the template title */
         #submission-template h1 {
             position: absolute;
-            top: 50px;
+            top: 60px;
             left: 512px;
             transform: translateX(-50%);
             margin: 0;
             font-size: 32px;
             color: #333;
+            text-align: center;
             text-shadow: 0 2px 4px rgba(255,255,255,0.5);
             z-index: 1;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* Explicitly locked board container placement */
+        /* Explicitly aligned absolute coordinates and width for the board container */
         #template-board {
             position: absolute;
-            top: 110px;
-            left: 112px;
+            top: 130px;
+            left: 112px; /* (1024px total width - 800px board width) / 2 = 112px for perfect centering */
             background-color: rgba(255, 255, 255, 0.85);
             background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
             background-size: 20px 20px;
+            backdrop-filter: blur(10px);
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -383,7 +385,6 @@
             margin-top: 15px;
         }
 
-        /* Phone / Mobile specific overrides */
         @media (max-width: 768px) {
             body {
                 height: auto;
@@ -403,7 +404,6 @@
                 margin-bottom: 20px;
             }
 
-            /* Adjust title size for mobile */
             .main-title {
                 font-size: 26px;
                 margin-top: 10px;
