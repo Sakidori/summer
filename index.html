@@ -4,330 +4,731 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Summer Photo Diary</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
-            font-family: 'Comic Neue', cursive, sans-serif;
-            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
-            min-height: 100vh;
-            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .header-container {
-            display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        h1 {
-            color: #fff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 10px;
             margin: 0;
-            font-size: 2.5rem;
+            width: 100vw;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
         }
 
-        .gallery-link-btn {
-            background: #ff6b81;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 1.1rem;
+        .top-left-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .emoji-decorations {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .emoji-palm {
+            position: absolute;
+            top: 80%;
+            left: -20px;
+            width: 350px;
+            height: auto;
+            opacity: 0.15;
+            transform: translateY(-50%);
+        }
+
+        .emoji-sun {
+            position: absolute;
+            top: 15%;
+            right: 2%;
+            width: 120px;
+            height: auto;
+            opacity: 0.2;
+        }
+
+        /* Main title image sizing with zeroed bottom margin for maximum tightness */
+        .main-title {
+            margin: 0 0 -20px 0;
+            height: 90px; 
+            width: auto;
+            object-fit: contain;
+            z-index: 1;
+        }
+
+        .controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 15px;
+            z-index: 1;
+        }
+
+        button.primary-btn {
+            padding: 10px 25px;
+            font-size: 16px;
             font-weight: bold;
+            color: white;
+            background-color: #ff7eb3;
+            border: none;
+            border-radius: 50px;
             cursor: pointer;
-            text-decoration: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        button.primary-btn:hover {
+            background-color: #ff529a;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        #board {
+            background-color: rgba(255, 255, 255, 0.85);
+            background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            max-width: 800px;
+            box-sizing: border-box;
+            z-index: 1;
+        }
+
+        .polaroid {
+            background: white;
+            padding: 12px 12px 20px 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            width: 170px;
+            display: flex;
+            flex-direction: column;
             transition: transform 0.2s;
         }
 
-        .gallery-link-btn:hover {
-            transform: scale(1.05);
-        }
+        .polaroid:nth-child(even) { transform: rotate(3deg); }
+        .polaroid:nth-child(odd) { transform: rotate(-3deg); }
 
-        /* Board holding the polaroids */
-        #submission-template {
-            background: #f0fdf4; /* dotted paper look */
-            background-image: radial-gradient(#bbf7d0 1px, transparent 1px);
-            background-size: 20px 20px;
-            width: 1000px;
-            height: 650px;
-            padding: 30px;
-            box-sizing: border-box;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(2, auto);
-            gap: 20px;
-            justify-items: center;
-            align-items: center;
-            position: relative;
-        }
-
-        .polaroid-slot {
-            background: white;
-            padding: 15px 15px 35px 15px;
-            border-radius: 4px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            width: 200px;
-            height: 250px;
+        .drop-zone {
+            width: 100%;
+            height: 150px;
+            background-color: #f8f9fa;
+            border: 2px dashed #ced4da;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            cursor: pointer;
-            position: relative;
-            transform: rotate(1deg);
-        }
-
-        .polaroid-slot:nth-child(even) {
-            transform: rotate(-1deg);
-        }
-
-        .image-dropzone {
-            width: 100%;
-            height: 180px;
-            border: 2px dashed #cbd5e1;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            color: #64748b;
+            color: #6c757d;
+            font-size: 13px;
             text-align: center;
-            font-size: 0.9rem;
             position: relative;
             overflow: hidden;
-            background: #f8fafc;
+            box-sizing: border-box;
+            cursor: pointer;
         }
 
-        .image-dropzone img {
+        .drop-zone .click-hint {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+            text-decoration: underline;
+        }
+
+        .drop-zone.dragover {
+            background-color: #e2e6ea;
+            border-color: #ff7eb3;
+        }
+
+        .drop-zone img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
+            pointer-events: none;
         }
 
         .title-text {
-            margin-top: 15px;
+            margin-top: 12px;
             text-align: center;
+            font-family: 'Comic Neue', cursive;
+            font-weight: 700;
+            font-size: 16px;
+            color: #000;
+            user-select: none;
+            white-space: normal; 
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.2;
+            max-height: 2.4em;
+            overflow: hidden;
+        }
+
+        /* --- Reliably Hidden Submission Template (Safe Off-Screen) --- */
+        #submission-template {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 1024px;
+            height: 768px;
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        #submission-template .emoji-decorations {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        #submission-template .emoji-palm {
+            position: absolute;
+            top: 80%;
+            left: -20px;
+            width: 350px;
+            height: auto;
+            opacity: 0.15;
+            transform: translateY(-50%);
+        }
+
+        #submission-template .emoji-sun {
+            position: absolute;
+            top: 15%;
+            right: 2%;
+            width: 120px;
+            height: auto;
+            opacity: 0.2;
+        }
+
+        #submission-template img.main-title {
+            margin: 0 0 15px 0;
+            height: 120px; 
+            width: auto;
+            object-fit: contain;
+            z-index: 1;
+        }
+
+        #template-board {
+            background-color: rgba(255, 255, 255, 0.85);
+            background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            width: 800px;
+            box-sizing: border-box;
+            z-index: 1;
+        }
+
+        #template-board .polaroid {
+            background: white;
+            padding: 12px 12px 20px 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            width: 170px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #template-board .polaroid:nth-child(even) { transform: rotate(3deg); }
+        #template-board .polaroid:nth-child(odd) { transform: rotate(-3deg); }
+
+        #template-board .drop-zone {
+            width: 100%;
+            height: 150px;
+            background-color: #f8f9fa;
+            border: 2px dashed #ced4da;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        #template-board .drop-zone:not([style*="background-image"]) {
+            background-color: black !important;
+        }
+
+        #template-board .title-text {
+            margin-top: 12px;
+            text-align: center;
+            font-family: 'Comic Neue', cursive;
             font-weight: 700;
             font-size: 16px;
             color: #000;
             word-wrap: break-word;
             line-height: 1.2;
-            max-height: 3.0em; 
+            max-height: 3.0em;
             overflow: hidden;
-            width: 100%;
         }
 
-        .hidden-input {
-            display: none;
-        }
-
-        .submit-container {
-            margin-top: 30px;
-        }
-
-        #submitBtn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 30px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: all 0.2s;
-        }
-
-        #submitBtn:hover {
-            background: #059669;
-            transform: translateY(-2px);
-        }
-
-        #submitBtn:disabled {
-            background: #94a3b8;
-            cursor: wait;
-            transform: none;
-        }
-
-        #loading-overlay {
+        .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
             z-index: 1000;
-            font-size: 1.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .modal-content h2 { margin-top: 0; color: #333; }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .modal-actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .cancel-btn {
+            padding: 10px 20px;
+            background: #eee;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #555;
+        }
+        .cancel-btn:hover { background: #ddd; }
+
+        #loading-msg {
+            display: none;
+            color: #ff7eb3;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        /* Phone / Mobile specific overrides */
+        @media (max-width: 768px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+                justify-content: flex-start;
+                padding: 20px 10px;
+            }
+
+            button.primary-btn.top-left-btn {
+                position: static;
+                margin-bottom: 20px;
+                width: 90%;
+            }
+
+            .controls {
+                margin-bottom: 20px;
+            }
+
+            .main-title {
+                height: 60px;
+                margin-top: 0px; /* Flush for mobile */
+            }
+
+            #board {
+                padding: 15px;
+                gap: 15px;
+                width: 100%;
+            }
+
+            .polaroid {
+                width: 140px;
+                padding: 10px 10px 15px 10px;
+            }
+
+            .drop-zone {
+                height: 120px;
+                font-size: 11px;
+            }
+
+            .title-text {
+                font-size: 13px;
+            }
+
+            .emoji-palm {
+                width: 250px;
+                left: -40px;
+                top: 80%;
+            }
+
+            .emoji-sun {
+                width: 80px;
+                top: 10%;
+                right: 2%;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <a href="gallery.html" class="gallery-link-btn">📸 Photo Gallery</a>
-        <h1>MY SUMMER PHOTO DIARY 🍉</h1>
+    <button class="primary-btn top-left-btn" onclick="location.href='gallery.html'">📸 Photo Gallery</button>
+
+    <div class="emoji-decorations">
+        <img src="https://cdn-icons-png.flaticon.com/512/7869/7869045.png" class="emoji-palm" alt="Palm Tree">
+        <img src="https://cdn-icons-png.flaticon.com/512/10484/10484062.png" class="emoji-sun" alt="Sun">
     </div>
 
-    <div id="submission-template">
-        <div class="polaroid-slot" onclick="document.getElementById('file1').click()">
-            <div class="image-dropzone" id="dz1">Click to select or drop image</div>
-            <input type="file" id="file1" class="hidden-input" accept="image/*" onchange="previewImage(this, 'dz1')">
+    <img src="title.png" class="main-title" alt="My Summer Photo Diary">
+
+    <div id="board">
+        <div class="polaroid">
+            <div class="drop-zone">ここに画像を<br>ドラッグ＆ドロップ<div class="click-hint">またはクリックして選択</div></div>
+            <input type="file" class="file-input" accept="image/*" style="display: none;">
             <div class="title-text">My favorite place</div>
         </div>
-
-        <div class="polaroid-slot" onclick="document.getElementById('file2').click()">
-            <div class="image-dropzone" id="dz2">Click to select or drop image</div>
-            <input type="file" id="file2" class="hidden-input" accept="image/*" onchange="previewImage(this, 'dz2')">
+        <div class="polaroid">
+            <div class="drop-zone">ここに画像を<br>ドラッグ＆ドロップ<div class="click-hint">またはクリックして選択</div></div>
+            <input type="file" class="file-input" accept="image/*" style="display: none;">
             <div class="title-text">My hobby</div>
         </div>
-
-        <div class="polaroid-slot" onclick="document.getElementById('file3').click()">
-            <div class="image-dropzone" id="dz3">Click to select or drop image</div>
-            <input type="file" id="file3" class="hidden-input" accept="image/*" onchange="previewImage(this, 'dz3')">
+        <div class="polaroid">
+            <div class="drop-zone">ここに画像を<br>ドラッグ＆ドロップ<div class="click-hint">またはクリックして選択</div></div>
+            <input type="file" class="file-input" accept="image/*" style="display: none;">
             <div class="title-text">An English word starting with "M"</div>
         </div>
-
-        <div class="polaroid-slot" onclick="document.getElementById('file4').click()">
-            <div class="image-dropzone" id="dz4">Click to select or drop image</div>
-            <input type="file" id="file4" class="hidden-input" accept="image/*" onchange="previewImage(this, 'dz4')">
+        <div class="polaroid">
+            <div class="drop-zone">ここに画像を<br>ドラッグ＆ドロップ<div class="click-hint">またはクリックして選択</div></div>
+            <input type="file" class="file-input" accept="image/*" style="display: none;">
             <div class="title-text">A selfie with a friend outside</div>
         </div>
-
-        <div class="polaroid-slot" onclick="document.getElementById('file5').click()">
-            <div class="image-dropzone" id="dz5">Click to select or drop image</div>
-            <input type="file" id="file5" class="hidden-input" accept="image/*" onchange="previewImage(this, 'dz5')">
+        <div class="polaroid">
+            <div class="drop-zone">ここに画像を<br>ドラッグ＆ドロップ<div class="click-hint">またはクリックして選択</div></div>
+            <input type="file" class="file-input" accept="image/*" style="display: none;">
             <div class="title-text">My favorite animal</div>
         </div>
     </div>
 
-    <div class="submit-container">
-        <button id="submitBtn" onclick="submitDiary()">Submit Diary</button>
+    <div class="controls">
+        <button class="primary-btn" onclick="openModal()">課題を提出する</button>
     </div>
 
-    <div id="loading-overlay">
-        <p>Generating and uploading your diary... Please wait.</p>
+    <div id="submission-template">
+        <div class="emoji-decorations">
+            <img src="https://cdn-icons-png.flaticon.com/512/7869/7869045.png" class="emoji-palm" alt="Palm Tree">
+            <img src="https://cdn-icons-png.flaticon.com/512/10484/10484062.png" class="emoji-sun" alt="Sun">
+        </div>
+        <img src="title.png" class="main-title" alt="My Summer Photo Diary">
+        <div id="template-board">
+            <div class="polaroid">
+                <div class="drop-zone"></div>
+                <div class="title-text">My favorite place</div>
+            </div>
+            <div class="polaroid">
+                <div class="drop-zone"></div>
+                <div class="title-text">My hobby</div>
+            </div>
+            <div class="polaroid">
+                <div class="drop-zone"></div>
+                <div class="title-text">An English word starting with "M"</div>
+            </div>
+            <div class="polaroid">
+                <div class="drop-zone"></div>
+                <div class="title-text">A selfie with a friend outside</div>
+            </div>
+            <div class="polaroid">
+                <div class="polaroid">
+                <div class="drop-zone"></div>
+                <div class="title-text">My favorite animal</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="studentModal">
+        <div class="modal-content">
+            <h2>Who are you?</h2>
+            <p style="color: #666; margin-bottom: 20px;">このフォームに記入してください</p>
+
+            <div class="form-group">
+                <label for="studentName">名前</label>
+                <input type="text" id="studentName" placeholder="例） 大谷翔平" required>
+            </div>
+            <div class="form-group">
+                <label for="studentYear">学年</label>
+                <input type="number" id="studentYear" placeholder="例） １" required min="1" max="3">
+            </div>
+            <div class="form-group">
+                <label for="studentClass">クラス</label>
+                <input type="number" id="studentClass" placeholder="例） １" required min="1" max="6">
+            </div>
+
+            <div id="loading-msg">送信中...しばらくお待ちください...</div>
+
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeModal()">キャンセル</button>
+                <button class="primary-btn" id="confirmSubmitBtn" onclick="handleSubmission()">提出する</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- FIREBASE CONFIG ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBxk_492uH0vJLr-iijocmRHjnvx9eLXY4",
-            authDomain: "summer-diary-8e0b6.firebaseapp.com",
-            databaseURL: "https://summer-diary-8e0b6-default-rtdb.firebaseio.com",
-            projectId: "summer-diary-8e0b6",
-            storageBucket: "summer-diary-8e0b6.firebasestorage.app",
-            messagingSenderId: "598705676339",
-            appId: "1:598705676339:web:860622afb519acd93a8346"
-        };
+        const dropZones = document.querySelectorAll('#board .drop-zone');
+        dropZones.forEach((zone, index) => {
+            const fileInput = zone.parentElement.querySelector('.file-input');
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+            zone.addEventListener('click', () => {
+                fileInput.click();
+            });
 
-        function previewImage(input, dropzoneId) {
-            const file = input.files[0];
-            if (file) {
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                processImageUpload(file, zone, index);
+            });
+
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                processImageUpload(file, zone, index);
+            });
+        });
+
+        function processImageUpload(file, targetZone, index) {
+            if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    const dz = document.getElementById(dropzoneId);
-                    // Clear previous image if any
-                    const existingImg = dz.querySelector('img');
-                    if (existingImg) existingImg.remove();
+                reader.onload = () => {
+                    targetZone.innerHTML = `<img src="${reader.result}" alt="Uploaded">`;
 
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    dz.appendChild(img);
-                }
+                    const fileInput = targetZone.parentElement.querySelector('.file-input');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
+
+                    const templateZones = document.querySelectorAll('#submission-template .drop-zone');
+                    if (templateZones[index]) {
+                        templateZones[index].style.backgroundImage = `url(${reader.result})`;
+                    }
+                };
                 reader.readAsDataURL(file);
+            } else {
+                alert('有効な画像ファイルをドラッグ＆ドロップまたは選択してください。');
             }
         }
 
-        async function submitDiary() {
-            // Ensure at least one image is uploaded before generating a board
-            const inputs = [
-                document.getElementById('file1').files[0],
-                document.getElementById('file2').files[0],
-                document.getElementById('file3').files[0],
-                document.getElementById('file4').files[0],
-                document.getElementById('file5').files[0]
-            ];
-            
-            if (inputs.every(file => !file)) {
-                alert("Please upload at least one picture to the diary before submitting.");
+        const modal = document.getElementById('studentModal');
+        const submitBtn = document.getElementById('confirmSubmitBtn');
+        const loadingMsg = document.getElementById('loading-msg');
+
+        function openModal() {
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            loadingMsg.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+
+        async function handleSubmission() {
+            await document.fonts.ready;
+
+            const name = document.getElementById('studentName').value.trim();
+            const year = parseInt(document.getElementById('studentYear').value);
+            const sClass = parseInt(document.getElementById('studentClass').value);
+
+            if (!name || isNaN(year) || isNaN(sClass)) {
+                alert("すべての項目に正しい数字を入力してください。");
                 return;
             }
 
-            const btn = document.getElementById('submitBtn');
-            const overlay = document.getElementById('loading-overlay');
-            
-            btn.disabled = true;
-            overlay.style.display = 'flex';
+            if (year < 1 || year > 3) {
+                alert("学年は 1 から 3 の間で入力してください。");
+                return;
+            }
+
+            if (sClass < 1 || sClass > 6) {
+                alert("クラスは 1 から 6 の間で入力してください。");
+                return;
+            }
+
+            const isConfirmed = confirm(`${name}さん、ボードを提出しますか？送信後の編集はできません。`);
+            if (!isConfirmed) return;
+
+            submitBtn.disabled = true;
+            loadingMsg.style.display = 'block';
+
+            const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const safeClass = sClass.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const safeYear = year.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+            const targetFolder = `${safeYear}-${safeClass}_${safeName}`;
+            const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
 
             try {
-                // 1. Wait for custom web fonts to settle fully
-                await document.fonts.ready;
-                await new Promise(resolve => setTimeout(resolve, 300));
+                const polaroids = document.querySelectorAll('#board .polaroid');
+                const uploadPromises = [];
 
-                // 2. Capture board element via html2canvas
-                const board = document.getElementById('submission-template');
-                const canvas = await html2canvas(board, {
+                for (let i = 0; i < polaroids.length; i++) {
+                    const fileInput = polaroids[i].querySelector('.file-input');
+                    const file = fileInput.files[0];
+                    if (file) {
+                        const promise = (async () => {
+                            const base64Individual = await compressImage(file, 800, 800); 
+                            const ext = file.name.split('.').pop() || 'png';
+                            const indFilename = `${targetFolder}_photo_${i + 1}_${Date.now()}.${ext}`;
+                            await uploadToDrive(indFilename, base64Individual, 'image/jpeg', targetFolder);
+                        })();
+                        uploadPromises.push(promise);
+                    }
+                }
+                await Promise.all(uploadPromises);
+
+                const templateElement = document.getElementById('submission-template');
+                const canvas = await html2canvas(templateElement, {
                     scale: 1.5,
                     backgroundColor: null,
-                    useCORS: true
+                    useCORS: true 
                 });
 
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                const dataUrl = canvas.toDataURL('image/png', 0.8);
+                const base64Board = dataUrl.split(',')[1]; 
 
-                // 3. Upload Canvas JPEG to Firebase Cloud Storage instead of large base64 strings to Firestore
-                const filename = 'diaries/' + Date.now() + '.jpg';
-                const storageRef = storage.ref().child(filename);
-                
-                const snapshot = await storageRef.putString(dataUrl, 'data_url');
-                const downloadURL = await snapshot.ref.getDownloadURL();
+                await uploadToDrive(boardFilename, base64Board, 'image/png', targetFolder);
 
-                // 4. Save the short Storage download URL string to Firestore collection
-                const newEntry = {
-                    src: downloadURL,
-                    title: "User Summer Diary Entry",
-                    likes: 0,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                alert("成功！ボードが送信されました。");
+                closeModal();
+
+            } catch (error) {
+                console.error("Submission error details:", error);
+                alert("送信に失敗しました。エラー内容: " + (error.message || error));
+                submitBtn.disabled = false;
+                loadingMsg.style.display = 'none';
+            }
+        }
+
+        function compressImage(file, maxWidth, maxHeight) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                        resolve(dataUrl.split(',')[1]);
+                    };
+                    img.onerror = reject;
                 };
+                reader.onerror = reject;
+            });
+        }
 
-                await db.collection("summerPictures").add(newEntry);
+        async function uploadToDrive(filename, base64Data, mimeType, folderName) {
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwud9oq-PgKx7Ubh6yw-mQsbVAiu-F6B3x8W2zv51I__yCMlsm_rgWFckHQA_dKv70W/exec";
 
-                alert("Successfully submitted your Summer Photo Diary!");
-                location.reload();
+            const formData = new FormData();
+            formData.append('base64Data', base64Data);
+            formData.append('mimeType', mimeType);
+            formData.append('filename', filename);
+            formData.append('folderName', folderName);
 
-            } catch (err) {
-                console.error("Submission failed:", err);
-                alert("Failed to process diary submission. Check console logs for details.");
-            } finally {
-                btn.disabled = false;
-                overlay.style.display = 'none';
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData
+            });
+
+            const aResult = await response.json();
+
+            if (aResult.result !== 'success') {
+                throw new Error(aResult.message || '送信に失敗しました。もう一度お試しください。');
             }
         }
     </script>
