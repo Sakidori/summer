@@ -179,9 +179,9 @@
         .title-text {
             margin-top: 12px;
             text-align: center;
-            font-family: 'Comic Neue', cursive; /* Replaced with Google Font */
+            font-family: 'Comic Neue', cursive;
             font-weight: 700;
-            font-size: 16px; /* Slightly adjusted for better readability */
+            font-size: 16px;
             color: #000;
             user-select: none;
             white-space: normal; 
@@ -296,7 +296,7 @@
         #template-board .title-text {
             margin-top: 12px;
             text-align: center;
-            font-family: 'Comic Neue', cursive; /* Replaced with Google Font */
+            font-family: 'Comic Neue', cursive;
             font-weight: 700;
             font-size: 16px;
             color: #000;
@@ -419,7 +419,7 @@
             }
 
             .title-text {
-                font-size: 13px; /* Stays proportional while keeping font family */
+                font-size: 13px;
             }
 
             .emoji-palm {
@@ -565,16 +565,13 @@
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = () => {
-                    // Update visible UI with img tag (object-fit cover works fine here)
                     targetZone.innerHTML = `<img src="${reader.result}" alt="Uploaded">`;
 
-                    // Sync file input
                     const fileInput = targetZone.parentElement.querySelector('.file-input');
                     const dataTransfer = new DataTransfer();
                     dataTransfer.items.add(file);
                     fileInput.files = dataTransfer.files;
 
-                    // Sync hidden template zone simultaneously via background image to avoid stretch
                     const templateZones = document.querySelectorAll('#submission-template .drop-zone');
                     if (templateZones[index]) {
                         templateZones[index].style.backgroundImage = `url(${reader.result})`;
@@ -603,6 +600,9 @@
 
         // --- Submission Logic ---
         async function handleSubmission() {
+            // Wait for the Google Font (Comic Neue) to be fully downloaded and rendered before rendering the canvas
+            await document.fonts.ready;
+
             const name = document.getElementById('studentName').value.trim();
             const year = parseInt(document.getElementById('studentYear').value);
             const sClass = parseInt(document.getElementById('studentClass').value);
@@ -636,7 +636,6 @@
             const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
 
             try {
-                // 1. COMPRESS & UPLOAD INDIVIDUAL IMAGES IN PARALLEL
                 const polaroids = document.querySelectorAll('#board .polaroid');
                 const uploadPromises = [];
 
@@ -653,10 +652,8 @@
                         uploadPromises.push(promise);
                     }
                 }
-                // Fire all individual image uploads concurrently
                 await Promise.all(uploadPromises);
 
-                // 2. RENDER SCREENSHOT FROM HIDDEN OFFSCREEN TEMPLATE (useCORS added here)
                 const templateElement = document.getElementById('submission-template');
                 const canvas = await html2canvas(templateElement, {
                     scale: 1.5,
@@ -667,7 +664,6 @@
                 const dataUrl = canvas.toDataURL('image/png', 0.8);
                 const base64Board = dataUrl.split(',')[1]; 
 
-                // 3. UPLOAD BOARD SCREENSHOT
                 await uploadToDrive(boardFilename, base64Board, 'image/png', targetFolder);
 
                 alert("成功！ボードが送信されました。");
