@@ -67,13 +67,12 @@
             opacity: 0.2;
         }
 
-        /* Unified main title styling */
+        /* Unified main title image styling */
         .main-title {
             margin: 0 0 15px 0;
-            font-size: 32px;
-            color: #333;
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+            height: 60px; /* Adjust height to match your title.png proportions */
+            width: auto;
+            object-fit: contain;
             z-index: 1;
         }
 
@@ -201,6 +200,10 @@
             width: 1024px;
             height: 768px;
             background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             box-sizing: border-box;
             overflow: hidden;
         }
@@ -235,30 +238,18 @@
             opacity: 0.2;
         }
 
-        /* Explicitly aligned absolute coordinates for the template title */
-        #submission-template h1 {
-            position: absolute;
-            top: 60px;
-            left: 512px;
-            transform: translateX(-50%);
-            margin: 0;
-            font-size: 32px;
-            color: #333;
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+        #submission-template img.main-title {
+            margin: 0 0 15px 0;
+            height: 80px; /* Scale up slightly for the 1024x768 canvas render */
+            width: auto;
+            object-fit: contain;
             z-index: 1;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* Explicitly aligned absolute coordinates and width for the board container */
         #template-board {
-            position: absolute;
-            top: 130px;
-            left: 112px; /* (1024px total width - 800px board width) / 2 = 112px for perfect centering */
             background-color: rgba(255, 255, 255, 0.85);
             background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
             background-size: 20px 20px;
-            backdrop-filter: blur(10px);
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -385,6 +376,7 @@
             margin-top: 15px;
         }
 
+        /* Phone / Mobile specific overrides */
         @media (max-width: 768px) {
             body {
                 height: auto;
@@ -405,7 +397,7 @@
             }
 
             .main-title {
-                font-size: 26px;
+                height: 45px;
                 margin-top: 10px;
             }
 
@@ -452,7 +444,7 @@
         <img src="https://cdn-icons-png.flaticon.com/512/10484/10484062.png" class="emoji-sun" alt="Sun">
     </div>
 
-    <h1 class="main-title">My Summer Photo Diary</h1>
+    <img src="title.png" class="main-title" alt="My Summer Photo Diary">
 
     <div id="board">
         <div class="polaroid">
@@ -491,7 +483,7 @@
             <img src="https://cdn-icons-png.flaticon.com/512/7869/7869045.png" class="emoji-palm" alt="Palm Tree">
             <img src="https://cdn-icons-png.flaticon.com/512/10484/10484062.png" class="emoji-sun" alt="Sun">
         </div>
-        <h1>My Summer Photo Diary</h1>
+        <img src="title.png" class="main-title" alt="My Summer Photo Diary">
         <div id="template-board">
             <div class="polaroid">
                 <div class="drop-zone"></div>
