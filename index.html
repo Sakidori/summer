@@ -192,13 +192,13 @@
             overflow: hidden;
         }
 
-        /* --- Hidden Submission Template Styles --- */
+        /* --- In-Place Hidden Submission Template (Option A) --- */
         #submission-template {
             position: absolute;
-            top: -9999px;
-            left: -9999px;
-            width: 1024px;
-            height: 768px;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
             display: flex;
             flex-direction: column;
@@ -206,6 +206,9 @@
             justify-content: center;
             box-sizing: border-box;
             overflow: hidden;
+            opacity: 0;       /* Invisible to the eye */
+            z-index: -1;      /* Placed behind the active interface */
+            pointer-events: none; /* Ignore clicks so users interact with the real board */
         }
 
         #submission-template .emoji-decorations {
@@ -259,7 +262,7 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 25px;
-            width: 800px;
+            width: 800px; /* Fixed rendering width for output uniformity */
             box-sizing: border-box;
             z-index: 1;
         }
@@ -537,7 +540,6 @@
     </div>
 
     <script>
-        // --- Drag/Drop & Click to Upload Logic ---
         const dropZones = document.querySelectorAll('#board .drop-zone');
         dropZones.forEach((zone, index) => {
             const fileInput = zone.parentElement.querySelector('.file-input');
@@ -583,7 +585,6 @@
             }
         }
 
-        // --- Modal Logic ---
         const modal = document.getElementById('studentModal');
         const submitBtn = document.getElementById('confirmSubmitBtn');
         const loadingMsg = document.getElementById('loading-msg');
@@ -598,9 +599,7 @@
             submitBtn.disabled = false;
         }
 
-        // --- Submission Logic ---
         async function handleSubmission() {
-            // Wait for the Google Font (Comic Neue) to be fully downloaded and rendered before rendering the canvas
             await document.fonts.ready;
 
             const name = document.getElementById('studentName').value.trim();
@@ -677,7 +676,6 @@
             }
         }
 
-        // --- Helper: Compress Image via Canvas ---
         function compressImage(file, maxWidth, maxHeight) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -716,7 +714,6 @@
             });
         }
 
-        // --- Google Drive Upload Function with Folder Support ---
         async function uploadToDrive(filename, base64Data, mimeType, folderName) {
             const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwud9oq-PgKx7Ubh6yw-mQsbVAiu-F6B3x8W2zv51I__yCMlsm_rgWFckHQA_dKv70W/exec";
 
