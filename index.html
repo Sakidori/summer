@@ -10,6 +10,7 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* Lock viewport to desktop staging standard to eliminate responsive calculation shifts */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
@@ -21,13 +22,17 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 20px;
             margin: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 1024px;
+            height: 768px;
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
+            position: absolute; /* Lock layout footprint */
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .top-left-btn {
@@ -119,7 +124,7 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 25px;
-            max-width: 800px;
+            width: 800px;
             box-sizing: border-box;
             z-index: 1;
         }
@@ -192,7 +197,7 @@
             overflow: hidden;
         }
 
-        /* --- Reliably Hidden Submission Template (Safe Off-Screen) --- */
+        /* --- Submission Staging Area Template (Identical base geometry) --- */
         #submission-template {
             position: absolute;
             top: -9999px;
@@ -377,63 +382,6 @@
             font-weight: bold;
             margin-top: 15px;
         }
-
-        @media (max-width: 768px) {
-            body {
-                height: auto;
-                min-height: 100vh;
-                overflow-y: auto;
-                justify-content: flex-start;
-                padding: 20px 10px;
-            }
-
-            button.primary-btn.top-left-btn {
-                position: static;
-                margin-bottom: 20px;
-                width: 90%;
-            }
-
-            .controls {
-                margin-bottom: 20px;
-            }
-
-            h1 {
-                font-size: 26px;
-                margin-top: 10px;
-            }
-
-            #board {
-                padding: 15px;
-                gap: 15px;
-                width: 100%;
-            }
-
-            .polaroid {
-                width: 140px;
-                padding: 10px 10px 15px 10px;
-            }
-
-            .drop-zone {
-                height: 120px;
-                font-size: 11px;
-            }
-
-            .title-text {
-                font-size: 13px;
-            }
-
-            .emoji-palm {
-                width: 250px;
-                left: -40px;
-                top: 80%;
-            }
-
-            .emoji-sun {
-                width: 80px;
-                top: 10%;
-                right: 2%;
-            }
-        }
     </style>
 </head>
 <body>
@@ -597,7 +545,6 @@
         }
 
         async function handleSubmission() {
-            // Ensures font is fully loaded and painted before rendering off-screen canvas
             await document.fonts.ready;
 
             const name = document.getElementById('studentName').value.trim();
