@@ -110,21 +110,22 @@
 
         /* Board sized specifically to hold exactly 3 items on top, 2 on bottom */
         #board {
-            background-color: rgba(255, 255, 255, 0.85);
-            background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            max-width: 620px;
-            box-sizing: border-box;
-            z-index: 1;
-        }
+    background-color: rgba(255, 255, 255, 0.85);
+    background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    width: 550px; /* Locked width: (170px * 3) + (20px * 2 gaps) = 550px exactly */
+    max-width: 100%;
+    box-sizing: border-box;
+    z-index: 1;
+}
 
         .polaroid {
             background: white;
