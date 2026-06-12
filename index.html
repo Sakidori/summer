@@ -21,12 +21,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 10px 10px 30px 10px; /* Added bottom padding to prevent cut-off */
             margin: 0;
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow-y: auto; /* Allow scrolling if content exceeds height */
             position: relative;
         }
 
@@ -67,18 +67,18 @@
             opacity: 0.2;
         }
 
-        /* Enforced larger main title image sizing */
+        /* Larger main title image sizing */
         .main-title {
-            margin: 0 0 15px 0;
+            margin: 10px 0 15px 0;
             height: 90px; 
             width: auto;
             object-fit: contain;
             z-index: 1;
         }
 
-        /* Moved up closer to the board */
+        /* Shifted closer to the board */
         .controls {
-            margin-top: 10px;
+            margin-top: 15px;
             display: flex;
             gap: 15px;
             z-index: 1;
@@ -113,13 +113,13 @@
             background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
             background-size: 20px 20px;
             backdrop-filter: blur(10px);
-            padding: 30px;
+            padding: 20px; /* Reduced padding to save vertical space */
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 25px;
+            gap: 15px; /* Reduced gap to save vertical space */
             max-width: 800px;
             box-sizing: border-box;
             z-index: 1;
@@ -385,27 +385,27 @@
                 min-height: 100vh;
                 overflow-y: auto;
                 justify-content: flex-start;
-                padding: 20px 10px;
+                padding: 10px 10px 30px 10px;
             }
 
             button.primary-btn.top-left-btn {
                 position: static;
-                margin-bottom: 20px;
+                margin-bottom: 15px;
                 width: 90%;
             }
 
             .controls {
-                margin-bottom: 20px;
+                margin-bottom: 15px;
             }
 
             .main-title {
-                height: 60px; /* Scaled up for mobile view */
+                height: 60px;
                 margin-top: 10px;
             }
 
             #board {
                 padding: 15px;
-                gap: 15px;
+                gap: 12px;
                 width: 100%;
             }
 
