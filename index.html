@@ -398,23 +398,21 @@
 
             /* UPDATED SECTION BELOW */
 #board {
-                padding: 15px;
-                gap: 15px;
-                width: 100%;             
-                display: flex;
-                flex-wrap: wrap;
-                /* This forces center alignment even if items don't fill the row */
-                justify-content: center; 
-                align-items: center;
-                margin: 0; 
-                box-sizing: border-box;
+                padding: 15px !important;
+                gap: 15px !important;
+                width: 100% !important;
+                display: flex !important;
+                flex-wrap: wrap !important;
+                justify-content: center !important; /* Force center alignment */
+                align-items: center !important;
+                margin: 0 auto !important;         /* Center the container */
             }
 
             .polaroid {
-                width: 140px;
-                padding: 10px 10px 15px 10px;
-                /* Removing auto margins to let justify-content take over */
-                margin: 0; 
+                width: 140px !important;
+                padding: 10px 10px 15px 10px !important;
+                margin: 0 !important;              /* Remove any default side margins */
+                flex: 0 0 140px !important;       /* Explicitly prevent stretching */
             }
             /* END OF UPDATED SECTION */
 
