@@ -6,15 +6,11 @@
     <title>My Summer Photo Diary</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=FComic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        html, body {
-            overflow-x: hidden; /* This stops the page from scrolling sideways */
-            width: 100%;
-            margin: 0;
-            padding: 0;
+        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
             background-attachment: fixed;
@@ -374,7 +370,7 @@
             margin-top: 15px;
         }
 
-/* Phone / Mobile specific overrides */
+        /* Phone / Mobile specific overrides */
         @media (max-width: 768px) {
             body {
                 height: auto;
@@ -400,24 +396,16 @@
                 margin-bottom: 10px;
             }
 
-            /* UPDATED SECTION BELOW */
-#board {
-        width: 90% !important; /* Slightly smaller than 100% to ensure no overflow */
-        max-width: 400px !important;
-        margin: 0 auto !important;
-        padding: 10px !important;
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-    }
+            #board {
+                padding: 15px;
+                gap: 15px;
+                width: 100%;
+            }
 
             .polaroid {
-                width: 140px !important;
-                padding: 10px 10px 15px 10px !important;
-                margin: 0 !important;              /* Remove any default side margins */
-                flex: 0 0 140px !important;       /* Explicitly prevent stretching */
+                width: 140px;
+                padding: 10px 10px 15px 10px;
             }
-            /* END OF UPDATED SECTION */
 
             .drop-zone {
                 height: 120px;
