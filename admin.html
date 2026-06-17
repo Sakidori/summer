@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel - Secure Login</title>
+    <title>Admin Panel - Login</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -10,7 +10,7 @@
     <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
-        #admin-panel { display: none; } /* Hidden until logged in */
+        #admin-panel { display: none; }
         .admin-card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
         input { padding: 8px; flex-grow: 1; }
         button { padding: 8px 15px; cursor: pointer; background: #ff7eb3; color: white; border: none; border-radius: 5px; }
@@ -21,6 +21,7 @@
     <div id="firebaseui-auth-container"></div>
     <div id="admin-panel">
         <h1>Admin Panel</h1>
+        <button onclick="firebase.auth().signOut()">Logout</button>
         <div id="admin-container"></div>
     </div>
 
@@ -32,33 +33,33 @@
         };
         firebase.initializeApp(firebaseConfig);
         
-        // Setup FirebaseUI
         const ui = new firebaseui.auth.AuthUI(firebase.auth());
         ui.start('#firebaseui-auth-container', {
-            signInOptions: [firebase.auth.EmailAuthProvider.PROVIDER_ID],
-            callbacks: {
-                signInSuccessWithAuthResult: () => {
-                    document.getElementById('firebaseui-auth-container').style.display = 'none';
-                    document.getElementById('admin-panel').style.display = 'block';
-                    loadAdminTools();
-                    return false; // Prevent redirect
+            signInOptions: [
+                {
+                    provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+                    requireDisplayName: false
                 }
-            }
+            ],
+            // This prevents the UI from showing the "Create Account" option if possible,
+            // though FirebaseUI is built to be a hybrid login/signup tool.
         });
 
-        // Check if already logged in
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 document.getElementById('firebaseui-auth-container').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'block';
                 loadAdminTools();
+            } else {
+                document.getElementById('firebaseui-auth-container').style.display = 'block';
+                document.getElementById('admin-panel').style.display = 'none';
             }
         });
 
         function loadAdminTools() {
             const db = firebase.firestore();
             const container = document.getElementById('admin-container');
-            container.innerHTML = ""; // Clear
+            container.innerHTML = "";
             for (let i = 1; i <= 5; i++) {
                 container.innerHTML += `<div class="admin-card">Title ${i}: <input type="text" id="input${i}"><button onclick="updateTitle(${i})">Update</button></div>`;
             }
@@ -67,8 +68,12 @@
         async function updateTitle(idNumber) {
             const db = firebase.firestore();
             const newText = document.getElementById('input' + idNumber).value;
-            await db.collection("settings").doc("title" + idNumber).set({ text: newText });
-            alert("Updated!");
+            try {
+                await db.collection("settings").doc("title" + idNumber).set({ text: newText });
+                alert("Updated!");
+            } catch (e) {
+                alert("Error: You do not have permission to update this.");
+            }
         }
     </script>
 </body>
