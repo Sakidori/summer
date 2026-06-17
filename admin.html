@@ -45,31 +45,33 @@
     const db = firebase.firestore(); 
 
     async function loadAdminTools() {
-        console.log("Attempting to load data..."); // Check the console for this!
-        const container = document.getElementById('admin-container');
-        container.innerHTML = "";
+    console.log("Attempting to load data...");
+    const container = document.getElementById('admin-container');
+    container.innerHTML = "";
+    
+    for (let i = 1; i <= 5; i++) {
+        container.innerHTML += `
+            <div class="admin-card">
+                Title ${i}: <input type="text" id="input${i}" placeholder="Loading...">
+                <button onclick="updateTitle(${i})">Update</button>
+            </div>`;
         
-        for (let i = 1; i <= 5; i++) {
-            container.innerHTML += `
-                <div class="admin-card">
-                    Title ${i}: <input type="text" id="input${i}" placeholder="Loading...">
-                    <button onclick="updateTitle(${i})">Update</button>
-                </div>`;
+        try {
+            console.log("Fetching: title" + i); // Will this print?
+            const docRef = db.collection("settings").doc("title" + i);
+            const doc = await docRef.get();
+            console.log("Fetched: title" + i); // Will this print?
             
-            try {
-                // Fetch from collection 'settings' document 'title1', 'title2', etc.
-                const doc = await db.collection("settings").doc("title" + i).get();
-                
-                if (doc.exists) {
-                    document.getElementById('input' + i).value = doc.data().text;
-                } else {
-                    document.getElementById('input' + i).placeholder = "Empty";
-                }
-            } catch (e) {
-                console.error("Critical Error loading title " + i, e);
+            if (doc.exists) {
+                document.getElementById('input' + i).value = doc.data().text;
+            } else {
+                document.getElementById('input' + i).placeholder = "Empty";
             }
+        } catch (e) {
+            console.error("CRITICAL ERROR on " + i, e);
         }
     }
+}
         
         async function login() {
             const email = document.getElementById('email').value;
