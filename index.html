@@ -617,83 +617,73 @@ for(let i = 1; i <= 5; i++) {
         }
 
         async function handleSubmission() {
-            // Fixed: Ensured fonts are ready and added a short safety delay to make sure external fonts are fully drawn to canvas
-            await document.fonts.ready;
-            await new Promise(resolve => setTimeout(resolve, 200));
+    // 1. Ensure fonts and DOM are ready
+    await document.fonts.ready;
+    await new Promise(resolve => setTimeout(resolve, 200));
 
-            const name = document.getElementById('studentName').value.trim();
-            const year = parseInt(document.getElementById('studentYear').value);
-            const sClass = parseInt(document.getElementById('studentClass').value);
+    const name = document.getElementById('studentName').value.trim();
+    const year = parseInt(document.getElementById('studentYear').value);
+    const sClass = parseInt(document.getElementById('studentClass').value);
 
-            if (!name || isNaN(year) || isNaN(sClass)) {
-                alert("すべての項目に正しい数字を入力してください。");
-                return;
-            }
+    if (!name || isNaN(year) || isNaN(sClass)) {
+        alert("すべての項目に正しい数字を入力してください。");
+        return;
+    }
 
-            if (year < 1 || year > 3) {
-                alert("学年は 1 から 3 の間で入力してください。");
-                return;
-            }
+    // 2. SYNC LOGIC: Copy current titles from the live board to the hidden template
+    const liveTitles = document.querySelectorAll('#board .title-text');
+    const templateTitles = document.querySelectorAll('#submission-template .title-text');
+    
+    liveTitles.forEach((liveEl, index) => {
+        if (templateTitles[index]) {
+            templateTitles[index].innerText = liveEl.innerText;
+        }
+    });
 
-            if (sClass < 1 || sClass > 6) {
-                alert("クラスは 1 から 6 の間で入力してください。");
-                return;
-            }
+    const isConfirmed = confirm(`${name}さん、ボードを提出しますか？`);
+    if (!isConfirmed) return;
 
-            const isConfirmed = confirm(`${name}さん、ボードを提出しますか？送信後の編集はできません。`);
-            if (!isConfirmed) return;
+    submitBtn.disabled = true;
+    loadingMsg.style.display = 'block';
 
-            submitBtn.disabled = true;
-            loadingMsg.style.display = 'block';
+    const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const targetFolder = `${year}-${sClass}_${safeName}`;
+    const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
 
-            const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const safeClass = sClass.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const safeYear = year.toString().replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    try {
+        // 3. Capture the updated template
+        const templateElement = document.getElementById('submission-template');
+        const canvas = await html2canvas(templateElement, {
+            scale: 1.5,
+            backgroundColor: null,
+            useCORS: true 
+        });
 
-            const targetFolder = `${safeYear}-${safeClass}_${safeName}`;
-            const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
+        const base64Board = canvas.toDataURL('image/png', 0.8).split(',')[1];
+        await uploadToDrive(boardFilename, base64Board, 'image/png', targetFolder);
 
-            try {
-                const polaroids = document.querySelectorAll('#board .polaroid');
-                const uploadPromises = [];
-
-                for (let i = 0; i < polaroids.length; i++) {
-                    const fileInput = polaroids[i].querySelector('.file-input');
-                    const file = fileInput.files[0];
-                    if (file) {
-                        const promise = (async () => {
-                            const base64Individual = await compressImage(file, 800, 800); 
-                            const ext = file.name.split('.').pop() || 'png';
-                            const indFilename = `${targetFolder}_photo_${i + 1}_${Date.now()}.${ext}`;
-                            await uploadToDrive(indFilename, base64Individual, 'image/jpeg', targetFolder);
-                        })();
-                        uploadPromises.push(promise);
-                    }
-                }
-                await Promise.all(uploadPromises);
-
-                const templateElement = document.getElementById('submission-template');
-                const canvas = await html2canvas(templateElement, {
-                    scale: 1.5,
-                    backgroundColor: null,
-                    useCORS: true 
-                });
-
-                const dataUrl = canvas.toDataURL('image/png', 0.8);
-                const base64Board = dataUrl.split(',')[1]; 
-
-                await uploadToDrive(boardFilename, base64Board, 'image/png', targetFolder);
-
-                alert("成功！ボードが送信されました。");
-                closeModal();
-
-            } catch (error) {
-                console.error("Submission error details:", error);
-                alert("送信に失敗しました。エラー内容: " + (error.message || error));
-                submitBtn.disabled = false;
-                loadingMsg.style.display = 'none';
+        // 4. Upload original images (using your existing logic)
+        const polaroids = document.querySelectorAll('#board .polaroid');
+        const uploadPromises = [];
+        for (let i = 0; i < polaroids.length; i++) {
+            const fileInput = polaroids[i].querySelector('.file-input');
+            if (fileInput.files[0]) {
+                uploadPromises.push(compressImage(fileInput.files[0], 800, 800).then(base64 => {
+                    return uploadToDrive(`${targetFolder}_photo_${i + 1}.jpg`, base64, 'image/jpeg', targetFolder);
+                }));
             }
         }
+        await Promise.all(uploadPromises);
+
+        alert("成功！ボードが送信されました。");
+        closeModal();
+    } catch (error) {
+        console.error(error);
+        alert("送信に失敗しました。");
+        submitBtn.disabled = false;
+        loadingMsg.style.display = 'none';
+    }
+}
 
         function compressImage(file, maxWidth, maxHeight) {
             return new Promise((resolve, reject) => {
