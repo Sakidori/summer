@@ -6,6 +6,8 @@
     <title>Summer Gallery</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -24,7 +26,7 @@
         }
 
         /* --- Emoji Background --- */
-      .emoji-decorations {
+        .emoji-decorations {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
@@ -32,44 +34,11 @@
             z-index: -1;
             overflow: hidden;
         }
-
-        .emoji-palm {
-            position: absolute;
-            top: 80%; 
-            right: -20px; /* Moved to right */
-            width: 350px; 
-            height: auto;
-            opacity: 0.15;
-            transform: translateY(-50%) scaleX(-1); /* Flipped on Y-axis (mirrored) */
-        }
-
-        .emoji-sun {
-            position: absolute;
-            top: 15%; 
-            left: 2%; /* Moved to left */
-            width: 120px; 
-            height: auto;
-            opacity: 0.2;
-            transform: scaleX(-1); /* Flipped on Y-axis (mirrored) */
-        }
+        .emoji-palm { position: absolute; top: 80%; right: -20px; width: 350px; height: auto; opacity: 0.15; transform: translateY(-50%) scaleX(-1); }
+        .emoji-sun { position: absolute; top: 15%; left: 2%; width: 120px; height: auto; opacity: 0.2; transform: scaleX(-1); }
 
         h1 { text-align: center; text-shadow: 0 2px 5px rgba(0,0,0,0.3); margin-bottom: 20px; }
-
-        .primary-btn {
-            display: inline-block;
-            padding: 10px 25px;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            background-color: #ff7eb3;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s, background-color 0.2s;
-            text-decoration: none;
-            margin-bottom: 25px;
-        }
+        .primary-btn { display: inline-block; padding: 10px 25px; font-size: 16px; font-weight: bold; color: white; background-color: #ff7eb3; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-decoration: none; margin-bottom: 25px; }
         .primary-btn:hover { background-color: #ff529a; transform: translateY(-2px); }
 
         .login-section { margin-bottom: 25px; }
@@ -117,60 +86,47 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyBxk_492uH0vJLr-iijocmRHjnvx9eLXY4",
-            authDomain: "summer-diary-8e0b6.firebaseapp.com",
-            databaseURL: "https://summer-diary-8e0b6-default-rtdb.firebaseio.com",
-            projectId: "summer-diary-8e0b6",
-            storageBucket: "summer-diary-8e0b6.firebasestorage.app",
-            messagingSenderId: "598705676339",
-            appId: "1:598705676339:web:860622afb519acd93a8346"
+            apiKey: "AIzaSyC4epDF_XFTi3MEuJHgrzbE7gVCFZ3piM0",
+            authDomain: "summer-diary-2.firebaseapp.com",
+            projectId: "summer-diary-2",
+            storageBucket: "summer-diary-2.firebasestorage.app",
+            appId: "1:614682899105:web:64d6a46712258dcf5536e06"
         };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const ADMIN_PASSCODE = "Sowhat";
+        const auth = firebase.auth();
 
-        if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
-            document.getElementById('adminPanel').style.display = 'flex';
-            document.getElementById('authBtn').innerText = 'Logout';
-            document.getElementById('authBtn').className = 'logout-btn';
-        }
+        // 1. Auth Listener: Updates UI
+        auth.onAuthStateChanged((user) => {
+            const adminPanel = document.getElementById('adminPanel');
+            const authBtn = document.getElementById('authBtn');
+            if (user && user.email === "alt@sakidori.com") {
+                adminPanel.style.display = 'flex';
+                authBtn.innerText = 'Logout';
+                authBtn.className = 'logout-btn';
+            } else {
+                adminPanel.style.display = 'none';
+                authBtn.innerText = 'Admin Login';
+                authBtn.className = 'login-btn';
+            }
+        });
 
-        function toggleAuth() {
-            if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
-                sessionStorage.removeItem('isAdminLoggedIn');
+        // 2. Global Functions (Defined outside for onclick access)
+        async function toggleAuth() {
+            if (auth.currentUser) {
+                await auth.signOut();
                 location.reload();
             } else {
-                const entered = prompt("Enter admin passcode:");
-                if (entered === ADMIN_PASSCODE) {
-                    sessionStorage.setItem('isAdminLoggedIn', 'true');
-                    location.reload();
+                const pass = prompt("Enter admin password:");
+                if (pass) {
+                    try {
+                        await auth.signInWithEmailAndPassword("alt@sakidori.com", pass);
+                        location.reload();
+                    } catch (e) { alert("Login failed: " + e.message); }
                 }
             }
         }
-
-        db.collection("summerPictures").orderBy("likes", "desc").onSnapshot((snapshot) => {
-            const grid = document.getElementById('gallery-grid');
-            document.getElementById('loading-gal').style.display = 'none';
-            grid.innerHTML = '';
-            const isAdmin = sessionStorage.getItem('isAdminLoggedIn') === 'true';
-
-            snapshot.forEach((doc) => {
-                const item = doc.data();
-                const card = document.createElement('div');
-                card.className = 'gallery-item';
-                card.innerHTML = `
-                    <img src="${item.src}" alt="Gallery Image">
-                    <div class="item-title">${item.title}</div>
-                    <div class="like-container">
-                        <button class="heart-btn" onclick="likeItem('${doc.id}', ${item.likes})">❤️</button>
-                        <span>${item.likes} Likes</span>
-                    </div>
-                    ${isAdmin ? `<button class="delete-btn" onclick="deletePhoto('${doc.id}')">🗑️ Delete</button>` : ''}
-                `;
-                grid.appendChild(card);
-            });
-        });
 
         async function uploadImage() {
             const file = document.getElementById('imageFile').files[0];
@@ -197,20 +153,39 @@
                 return;
             }
             try {
-                await db.collection("summerPictures").doc(docId).update({
-                    likes: currentLikes + 1
-                });
+                await db.collection("summerPictures").doc(docId).update({ likes: currentLikes + 1 });
                 likedPhotos.push(docId);
                 localStorage.setItem('likedPhotos', JSON.stringify(likedPhotos));
-            } catch (err) {
-                console.error("Error updating like:", err);
-                alert("いいね！の送信に失敗しました。");
-            }
+            } catch (err) { alert("いいね！の送信に失敗しました。"); }
         }
 
         async function deletePhoto(id) {
             if (confirm("Delete this?")) await db.collection("summerPictures").doc(id).delete();
         }
+
+        // 3. Gallery Renderer
+        db.collection("summerPictures").orderBy("likes", "desc").onSnapshot((snapshot) => {
+            const grid = document.getElementById('gallery-grid');
+            document.getElementById('loading-gal').style.display = 'none';
+            grid.innerHTML = '';
+            const isAdmin = auth.currentUser && auth.currentUser.email === "alt@sakidori.com";
+
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                const card = document.createElement('div');
+                card.className = 'gallery-item';
+                card.innerHTML = `
+                    <img src="${item.src}" alt="Gallery Image">
+                    <div class="item-title">${item.title}</div>
+                    <div class="like-container">
+                        <button class="heart-btn" onclick="likeItem('${doc.id}', ${item.likes})">❤️</button>
+                        <span>${item.likes} Likes</span>
+                    </div>
+                    ${isAdmin ? `<button class="delete-btn" onclick="deletePhoto('${doc.id}')">🗑️ Delete</button>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        });
     </script>
 </body>
 </html>
