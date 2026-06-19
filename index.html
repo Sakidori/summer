@@ -672,12 +672,13 @@ for (let i = 0; i < polaroids.length; i++) {
 
         alert("成功！ボードが送信されました。");
         closeModal();
-    } catch (error) {
-        console.error(error);
-        alert("送信に失敗しました。");
-        submitBtn.disabled = false;
-        loadingMsg.style.display = 'none';
-    }
+  } catch (error) {
+    console.error("Full error object:", error);
+    // This will alert the actual error message instead of the generic one
+    alert("送信に失敗しました: " + error.message); 
+    submitBtn.disabled = false;
+    loadingMsg.style.display = 'none';
+}
 }
 
         function compressImage(file, maxWidth, maxHeight) {
@@ -718,26 +719,32 @@ for (let i = 0; i < polaroids.length; i++) {
             });
         }
 
-        async function uploadP(filename, base64Data, mimeType, folderName) {
-            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiElSpF5musX9T8AbJ4JKdeU-bAtWLeScpvUm5FnPhIk4Y8WaJM302WezUucXDIl8/exec";
+async function uploadP(filename, base64Data, mimeType, folderName) {
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiElSpF5musX9T8AbJ4JKdeU-bAtWLeScpvUm5FnPhIk4Y8WaJM302WezUucXDIl8/exec";
 
-            const formData = new FormData();
-            formData.append('base64Data', base64Data);
-            formData.append('mimeType', mimeType);
-            formData.append('filename', filename);
-            formData.append('folderName', folderName);
+    // Use URLSearchParams instead of FormData
+    const params = new URLSearchParams();
+    params.append('base64Data', base64Data);
+    params.append('mimeType', mimeType);
+    params.append('filename', filename);
+    params.append('folderName', folderName);
 
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                body: formData
-            });
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params
+    });
 
-            const aResult = await response.json();
-
-            if (aResult.result !== 'success') {
-                throw new Error(aResult.message || '送信に失敗しました。もう一度お試しください。');
-            }
-        }
+    if (!response.ok) throw new Error("Network response was not ok. Status: " + response.status);
+    
+    const aResult = await response.json();
+    
+    if (aResult.result !== 'success') {
+        throw new Error(aResult.message || '送信に失敗しました。');
+    }
+}
     </script>
 </body>
 </html>
