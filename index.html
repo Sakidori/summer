@@ -656,16 +656,19 @@ for(let i = 1; i <= 5; i++) {
         await uploadP(boardFilename, base64Board, 'image/png', targetFolder);
 
         const polaroids = document.querySelectorAll('#board .polaroid');
-        const uploadPromises = [];
-        for (let i = 0; i < polaroids.length; i++) {
-            const fileInput = polaroids[i].querySelector('.file-input');
-            if (fileInput.files[0]) {
-                uploadPromises.push(compressImage(fileInput.files[0], 800, 800).then(base64 => {
-                    return uploadP(`${targetFolder}_photo_${i + 1}.jpg`, base64, 'image/jpeg', targetFolder);
-                }));
-            }
-        }
-        await Promise.all(uploadPromises);
+
+for (let i = 0; i < polaroids.length; i++) {
+    const fileInput = polaroids[i].querySelector('.file-input');
+    
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        console.log(`Uploading photo ${i + 1}...`);
+        const base64 = await compressImage(fileInput.files[0], 800, 800);
+        await uploadP(`${targetFolder}_photo_${i + 1}.jpg`, base64, 'image/jpeg', targetFolder);
+        
+        // Optional: Add a tiny delay to ensure mobile network stability
+        await new Promise(resolve => setTimeout(resolve, 500)); 
+    }
+}
 
         alert("成功！ボードが送信されました。");
         closeModal();
@@ -706,7 +709,7 @@ for(let i = 1; i <= 5; i++) {
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.3);
                         resolve(dataUrl.split(',')[1]);
                     };
                     img.onerror = reject;
