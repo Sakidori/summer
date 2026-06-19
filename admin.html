@@ -38,17 +38,14 @@
         storageBucket: "summer-diary-8e0b6.firebasestorage.app" 
     };
     
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     
-    // Get the Firestore instance specifically for the compatibility SDK
     const db = firebase.firestore(); 
 
     async function loadAdminTools() {
     const container = document.getElementById('admin-container');
     container.innerHTML = "";
     
-    // 1. Build the UI
     for (let i = 1; i <= 5; i++) {
         container.innerHTML += `
             <div class="admin-card">
@@ -57,7 +54,6 @@
             </div>`;
     }
 
-    // 2. Give the browser a split second to render the HTML before filling it
     setTimeout(async () => {
         const db = firebase.firestore();
         for (let i = 1; i <= 5; i++) {
@@ -73,14 +69,14 @@
                 console.error("Error loading " + i, e);
             }
         }
-    }, 100); // 100ms delay is usually enough
+    }, 100); 
 }
         
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             try {
-                // This ONLY attempts to sign in. It will fail if you haven't created the user in the console.
+                
                 await firebase.auth().signInWithEmailAndPassword(email, password);
             } catch (e) {
                 alert("Login Failed: " + e.message);
