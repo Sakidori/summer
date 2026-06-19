@@ -24,8 +24,6 @@
             align-items: center;
             overflow-x: hidden;
         }
-
-        /* --- Emoji Background --- */
         .emoji-decorations {
             position: fixed;
             top: 0; left: 0;
@@ -99,7 +97,6 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // 1. Auth Listener: Updates UI
         auth.onAuthStateChanged((user) => {
             const adminPanel = document.getElementById('adminPanel');
             const authBtn = document.getElementById('authBtn');
@@ -114,7 +111,6 @@
             }
         });
 
-        // 2. Global Functions (Defined outside for onclick access)
         async function toggleAuth() {
             if (auth.currentUser) {
                 await auth.signOut();
@@ -165,7 +161,6 @@
             if (confirm("Delete this?")) await db.collection("summerPictures").doc(id).delete();
         }
 
-        // 3. Gallery Renderer
         db.collection("summerPictures").orderBy("likes", "desc").onSnapshot((snapshot) => {
             const grid = document.getElementById('gallery-grid');
             document.getElementById('loading-gal').style.display = 'none';
