@@ -640,9 +640,8 @@ for(let i = 1; i <= 5; i++) {
     submitBtn.disabled = true;
     loadingMsg.style.display = 'block';
 
-    const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const targetFolder = `${year}-${sClass}_${safeName}`;
-    const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
+const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
+const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
 
     try {
         const templateElement = document.getElementById('submission-template');
