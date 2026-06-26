@@ -648,7 +648,7 @@ async function handleSubmission() {
             useCORS: true 
         });
 
-        const base64Board = canvas.toDataURL('image/jpeg', 0.3).split(',')[1];
+        const base64Board = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
         console.log("Base64 string length:", base64Board.length);
 
         // Your specific filename logic
