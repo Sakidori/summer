@@ -649,7 +649,8 @@ async function handleSubmission() {
         });
 
         const base64Board = canvas.toDataURL('image/png', 0.8).split(',')[1];
-        
+        console.log("Base64 string length:", base64Board.length);
+
         // Your specific filename logic
         const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
         const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
