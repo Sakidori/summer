@@ -613,67 +613,58 @@ for(let i = 1; i <= 5; i++) {
         }
 
 async function handleSubmission() {
-    await document.fonts.ready;
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Get the values from your input fields
-const name = document.getElementById('studentName').value.trim();
-const year = document.getElementById('studentYear').value;
-const sClass = document.getElementById('studentClass').value;
-
-// Create the unique filename using these variables
-// Format: 1-1_Name_timestamp.png
-const timestamp = new Date().getTime();
-const boardFilename = `${year}-${sClass}_${name}_${timestamp}.png`;
-
-// Send this specific filename to your upload function
-await uploadP(boardFilename, base64Board, 'image/png', targetFolder);
+    // 1. Validation
+    const name = document.getElementById('studentName').value.trim();
+    const year = document.getElementById('studentYear').value;
+    const sClass = document.getElementById('studentClass').value;
 
     if (!name || isNaN(year) || isNaN(sClass)) {
         alert("すべての項目に正しい数字を入力してください。");
         return;
     }
 
-    const liveTitles = document.querySelectorAll('#board .title-text');
-    const templateTitles = document.querySelectorAll('#submission-template .title-text');
-    
-    liveTitles.forEach((liveEl, index) => {
-        if (templateTitles[index]) {
-            templateTitles[index].innerText = liveEl.innerText;
-        }
-    });
-
+    // 2. UI Updates
     const isConfirmed = confirm(`${name}さん、ボードを提出しますか？`);
     if (!isConfirmed) return;
 
+    const submitBtn = document.getElementById('submit-btn'); // Ensure this ID is correct
     submitBtn.disabled = true;
-    loadingMsg.style.display = 'block';
+    document.getElementById('loadingMsg').style.display = 'block';
 
     try {
+        const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
+        const timestamp = Date.now();
+
+        // 3. Capture Board
         const templateElement = document.getElementById('submission-template');
-        const canvas = await html2canvas(templateElement, {
-            scale: 1.5,
-            backgroundColor: null,
-            useCORS: true 
+        const canvas = await html2canvas(templateElement, { scale: 1.5, backgroundColor: null, useCORS: true });
+        const boardBase64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+        
+        // Prepare list of files (Board + 6 Photos)
+        const filesToUpload = [
+            { name: `board_${timestamp}.png`, data: boardBase64 }
+        ];
+
+        // Assuming your 6 photos are in elements with class 'photo-entry'
+        const photoElements = document.querySelectorAll('.photo-entry'); 
+        photoElements.forEach((el, index) => {
+            // Logic to get base64 from your specific photo elements
+            const photoData = el.src.split(',')[1]; 
+            filesToUpload.push({ name: `photo_${index + 1}_${timestamp}.png`, data: photoData });
         });
 
-        const base64Board = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
-        console.log("Base64 string length:", base64Board.length);
-
-        // Your specific filename logic
-        const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
-        const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
-
-        // The Azure call
-        await uploadP(boardFilename, base64Board, 'image/png', targetFolder);
+        // 4. Sequential Upload Loop
+        for (const file of filesToUpload) {
+            await uploadP(file.name, file.data, 'image/png', targetFolder);
+        }
 
         alert("成功！ボードが送信されました。");
         closeModal();
     } catch (error) {
-        console.error("Full error object:", error);
-        alert("送信に失敗しました: " + error.message); 
+        console.error("Submission error:", error);
+        alert("送信に失敗しました: " + error.message);
         submitBtn.disabled = false;
-        loadingMsg.style.display = 'none';
+        document.getElementById('loadingMsg').style.display = 'none';
     }
 }
 
