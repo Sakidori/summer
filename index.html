@@ -625,7 +625,6 @@ async function handleSubmission() {
     const isConfirmed = confirm(`${name}さん、ボードを提出しますか？`);
     if (!isConfirmed) return;
 
-    // Fix: Updated IDs to match your HTML
     const submitBtn = document.getElementById('confirmSubmitBtn');
     const loadingMsg = document.getElementById('loading-msg');
     
@@ -633,32 +632,39 @@ async function handleSubmission() {
     loadingMsg.style.display = 'block';
 
     try {
-        const targetFolder = `${year}-${sClass}_${name}`;
+        // Human-readable identifiers
+        const now = new Date();
+        const dateString = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
         const timestamp = Date.now();
+        const baseFileName = `${dateString}_${year}-${sClass}_${name}`;
+        const targetFolder = `${year}-${sClass}_${name}`;
 
-        // Capture Board
+        // 1. Capture Board
         const canvas = await html2canvas(document.getElementById('submission-template'), { 
             scale: 1.5, backgroundColor: null, useCORS: true 
         });
         const boardBase64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
         
         const filesToUpload = [
-            { name: `board_${timestamp}.png`, data: boardBase64 }
+            { name: `board_${baseFileName}_${timestamp}.png`, data: boardBase64 }
         ];
 
-        // Capture photos
+        // 2. Capture uploaded photos
         const photoElements = document.querySelectorAll('#board .drop-zone img'); 
         photoElements.forEach((img, index) => {
             if (img.src && img.src.startsWith('data:image')) {
                 const photoBase64 = img.src.split(',')[1];
-                filesToUpload.push({ name: `photo_${index + 1}_${timestamp}.png`, data: photoBase64 });
+                filesToUpload.push({ 
+                    name: `photo_${index + 1}_${baseFileName}_${timestamp}.png`, 
+                    data: photoBase64 
+                });
             }
         });
 
-        // Upload
+        // 3. Upload sequentially
         for (const file of filesToUpload) {
             await uploadP(file.name, file.data, 'image/png', targetFolder);
-            await new Promise(resolve => setTimeout(resolve, 600)); // Delay for stability
+            await new Promise(resolve => setTimeout(resolve, 600)); 
         }
 
         alert("成功！ボードと写真が送信されました。");
