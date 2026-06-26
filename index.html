@@ -644,11 +644,15 @@ async function handleSubmission() {
         ];
 
         // 2. Capture uploaded photos (Grabbing from your existing image elements)
-        const photoElements = document.querySelectorAll('#photo-gallery img'); 
-        photoElements.forEach((img, index) => {
-            const photoBase64 = img.src.split(',')[1];
-            filesToUpload.push({ name: `photo_${index + 1}_${timestamp}.png`, data: photoBase64 });
-        });
+const photoElements = document.querySelectorAll('#board .drop-zone img'); 
+
+photoElements.forEach((img, index) => {
+    // Only grab if the src actually contains data
+    if (img.src && img.src.startsWith('data:image')) {
+        const photoBase64 = img.src.split(',')[1];
+        filesToUpload.push({ name: `photo_${index + 1}_${timestamp}.png`, data: photoBase64 });
+    }
+});
 
         // 3. Upload all sequentially
         for (const file of filesToUpload) {
