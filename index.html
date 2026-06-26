@@ -654,10 +654,12 @@ photoElements.forEach((img, index) => {
     }
 });
 
-        // 3. Upload all sequentially
-        for (const file of filesToUpload) {
-            await uploadP(file.name, file.data, 'image/png', targetFolder);
-        }
+  // 3. Upload all sequentially with a slight delay
+for (const file of filesToUpload) {
+    await uploadP(file.name, file.data, 'image/png', targetFolder);
+    // Add this line to give Azure a moment to breathe between files
+    await new Promise(resolve => setTimeout(resolve, 500)); 
+}
 
         alert("成功！ボードと写真が送信されました。");
         closeModal();
