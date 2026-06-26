@@ -709,23 +709,21 @@ for (const file of filesToUpload) {
             });
         }
 
+
 async function uploadP(filename, base64Data, mimeType, folderName) {
     const AZURE_URL = "https://prod-45.japaneast.logic.azure.com:443/workflows/1f68dcfb4e294a78b56863bd6518df51/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=2lGlPIdtUxJnIO9ydpbrIa_VYNPUYVBcQztv6Lti6vc";
 
-const response = await fetch(AZURE_URL, {
+    const response = await fetch(AZURE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             filename: filename,
             base64Data: base64Data,
             mimeType: mimeType,
+            folderName: folderName // Ensure this is sent!
         })
     });
-
-    if (!response.ok) throw new Error("Upload failed");
-    
-    // Logic Apps might return a simple confirmation
-    return { result: 'success' };
+    return response;
 }
     </script>
 </body>
