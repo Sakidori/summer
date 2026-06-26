@@ -616,9 +616,18 @@ async function handleSubmission() {
     await document.fonts.ready;
     await new Promise(resolve => setTimeout(resolve, 200));
 
-    const name = document.getElementById('studentName').value.trim();
-    const year = parseInt(document.getElementById('studentYear').value);
-    const sClass = parseInt(document.getElementById('studentClass').value);
+    // Get the values from your input fields
+const name = document.getElementById('studentName').value.trim();
+const year = document.getElementById('studentYear').value;
+const sClass = document.getElementById('studentClass').value;
+
+// Create the unique filename using these variables
+// Format: 1-1_Name_timestamp.png
+const timestamp = new Date().getTime();
+const boardFilename = `${year}-${sClass}_${name}_${timestamp}.png`;
+
+// Send this specific filename to your upload function
+await uploadP(boardFilename, base64Board, 'image/png', targetFolder);
 
     if (!name || isNaN(year) || isNaN(sClass)) {
         alert("すべての項目に正しい数字を入力してください。");
