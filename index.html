@@ -613,7 +613,6 @@ for(let i = 1; i <= 5; i++) {
         }
 
 async function handleSubmission() {
-    // 1. Validation
     const name = document.getElementById('studentName').value.trim();
     const year = document.getElementById('studentYear').value;
     const sClass = document.getElementById('studentClass').value;
@@ -623,47 +622,45 @@ async function handleSubmission() {
         return;
     }
 
-    // 2. UI Updates
     const isConfirmed = confirm(`${name}さん、ボードを提出しますか？`);
     if (!isConfirmed) return;
 
-    const submitBtn = document.getElementById('submit-btn'); // Ensure this ID is correct
-    submitBtn.disabled = true;
+    // UI Updates
+    document.getElementById('submit-btn').disabled = true;
     document.getElementById('loadingMsg').style.display = 'block';
 
     try {
         const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
         const timestamp = Date.now();
 
-        // 3. Capture Board
-        const templateElement = document.getElementById('submission-template');
-        const canvas = await html2canvas(templateElement, { scale: 1.5, backgroundColor: null, useCORS: true });
+        // 1. Capture Board
+        const canvas = await html2canvas(document.getElementById('submission-template'), { 
+            scale: 1.5, backgroundColor: null, useCORS: true 
+        });
         const boardBase64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
         
-        // Prepare list of files (Board + 6 Photos)
         const filesToUpload = [
             { name: `board_${timestamp}.png`, data: boardBase64 }
         ];
 
-        // Assuming your 6 photos are in elements with class 'photo-entry'
-        const photoElements = document.querySelectorAll('.photo-entry'); 
-        photoElements.forEach((el, index) => {
-            // Logic to get base64 from your specific photo elements
-            const photoData = el.src.split(',')[1]; 
-            filesToUpload.push({ name: `photo_${index + 1}_${timestamp}.png`, data: photoData });
+        // 2. Capture uploaded photos (Grabbing from your existing image elements)
+        const photoElements = document.querySelectorAll('#photo-gallery img'); 
+        photoElements.forEach((img, index) => {
+            const photoBase64 = img.src.split(',')[1];
+            filesToUpload.push({ name: `photo_${index + 1}_${timestamp}.png`, data: photoBase64 });
         });
 
-        // 4. Sequential Upload Loop
+        // 3. Upload all sequentially
         for (const file of filesToUpload) {
             await uploadP(file.name, file.data, 'image/png', targetFolder);
         }
 
-        alert("成功！ボードが送信されました。");
+        alert("成功！ボードと写真が送信されました。");
         closeModal();
     } catch (error) {
         console.error("Submission error:", error);
-        alert("送信に失敗しました: " + error.message);
-        submitBtn.disabled = false;
+        alert("送信に失敗しました。");
+        document.getElementById('submit-btn').disabled = false;
         document.getElementById('loadingMsg').style.display = 'none';
     }
 }
