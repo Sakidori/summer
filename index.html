@@ -625,11 +625,13 @@ async function handleSubmission() {
         return;
     }
 
-    // Update the template titles before capturing
     const liveTitles = document.querySelectorAll('#board .title-text');
     const templateTitles = document.querySelectorAll('#submission-template .title-text');
+    
     liveTitles.forEach((liveEl, index) => {
-        if (templateTitles[index]) templateTitles[index].innerText = liveEl.innerText;
+        if (templateTitles[index]) {
+            templateTitles[index].innerText = liveEl.innerText;
+        }
     });
 
     const isConfirmed = confirm(`${name}さん、ボードを提出しますか？`);
@@ -637,31 +639,29 @@ async function handleSubmission() {
 
     submitBtn.disabled = true;
     loadingMsg.style.display = 'block';
-    loadingMsg.innerText = "送信中... 完了まで少しお待ちください...";
-
-    const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
-    const boardFilename = `${targetFolder}_final_board.png`;
 
     try {
-        // Capture the combined template
         const templateElement = document.getElementById('submission-template');
         const canvas = await html2canvas(templateElement, {
             scale: 1.5,
             backgroundColor: null,
-            useCORS: true
+            useCORS: true 
         });
 
-        // Convert the finished canvas to a single base64 string
         const base64Board = canvas.toDataURL('image/png', 0.8).split(',')[1];
+        
+        // Your specific filename logic
+        const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
+        const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
 
-        // Send ONLY this one, finished file to your Google Script
+        // The Azure call
         await uploadP(boardFilename, base64Board, 'image/png', targetFolder);
 
         alert("成功！ボードが送信されました。");
         closeModal();
     } catch (error) {
-        console.error("Submission error:", error);
-        alert("送信に失敗しました: " + error.message);
+        console.error("Full error object:", error);
+        alert("送信に失敗しました: " + error.message); 
         submitBtn.disabled = false;
         loadingMsg.style.display = 'none';
     }
