@@ -475,7 +475,8 @@
 </div>
 
     <div class="controls">
-        <button class="primary-btn" onclick="openModal()">課題を提出する</button>
+        <button class="primary-btn" onclick="openModal()">1.ボードを保存する</button>
+        <button class="primary-btn" onclick="location.href='https://info.logoform.jp/'">2.ロゴフォーム</button>
     </div>
 
     <div id="submission-template">
@@ -487,23 +488,23 @@
         <div id="template-board">
             <div class="polaroid">
                 <div class="drop-zone"></div>
-                <div class="title-text">My favorite place</div>
+                <div class="title-text"></div>
             </div>
             <div class="polaroid">
                 <div class="drop-zone"></div>
-                <div class="title-text">My hobby</div>
+                <div class="title-text"></div>
             </div>
             <div class="polaroid">
                 <div class="drop-zone"></div>
-                <div class="title-text">An English word starting with "M"</div>
+                <div class="title-text"></div>
             </div>
             <div class="polaroid">
                 <div class="drop-zone"></div>
-                <div class="title-text">A selfie with a friend outside</div>
+                <div class="title-text"></div>
             </div>
             <div class="polaroid">
                 <div class="drop-zone"></div>
-                <div class="title-text">My favorite animal</div>
+                <div class="title-text"></div>
             </div>
         </div>
     </div>
@@ -526,33 +527,32 @@
                 <input type="number" id="studentClass" placeholder="例） １" required min="1" max="6">
             </div>
 
-            <div id="loading-msg">送信中...しばらくお待ちください...</div>
+            <div id="loading-msg">保存中...しばらくお待ちください...</div>
 
             <div class="modal-actions">
                 <button class="cancel-btn" onclick="closeModal()">キャンセル</button>
-                <button class="primary-btn" id="confirmSubmitBtn" onclick="handleSubmission()">提出する</button>
+                <button class="primary-btn" id="confirmSubmitBtn" onclick="handleSubmission()">保存する</button>
             </div>
         </div>
     </div>
 
     <script>
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBxk_492uH0vJLr-iijocmRHjnvx9eLXY4", 
+            projectId: "summer-diary-8e0b6", 
+            storageBucket: "summer-diary-8e0b6.firebasestorage.app" 
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-
-const firebaseConfig = { 
-    apiKey: "AIzaSyBxk_492uH0vJLr-iijocmRHjnvx9eLXY4", 
-    projectId: "summer-diary-8e0b6", 
-    storageBucket: "summer-diary-8e0b6.firebasestorage.app" 
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-for(let i = 1; i <= 5; i++) {
-    db.collection("settings").doc("title" + i).onSnapshot(doc => {
-        if(doc.exists) {
-            document.getElementById("title" + i).innerText = doc.data().text;
+        for(let i = 1; i <= 5; i++) {
+            db.collection("settings").doc("title" + i).onSnapshot(doc => {
+                if(doc.exists) {
+                    document.getElementById("title" + i).innerText = doc.data().text;
+                }
+            });
         }
-    });
-}
+        
         const dropZones = document.querySelectorAll('#board .drop-zone');
         dropZones.forEach((zone, index) => {
             const fileInput = zone.parentElement.querySelector('.file-input');
@@ -612,126 +612,66 @@ for(let i = 1; i <= 5; i++) {
             submitBtn.disabled = false;
         }
 
-async function handleSubmission() {
-    const name = document.getElementById('studentName').value.trim();
-    const year = document.getElementById('studentYear').value;
-    const sClass = document.getElementById('studentClass').value;
+        async function handleSubmission() {
+            await document.fonts.ready;
+            await new Promise(resolve => setTimeout(resolve, 200));
 
-    if (!name || isNaN(year) || isNaN(sClass)) {
-        alert("すべての項目に正しい数字を入力してください。");
-        return;
-    }
+            const name = document.getElementById('studentName').value.trim();
+            const year = parseInt(document.getElementById('studentYear').value);
+            const sClass = parseInt(document.getElementById('studentClass').value);
 
-    const isConfirmed = confirm(`${name}さん、ボードを提出しますか？`);
-    if (!isConfirmed) return;
-
-    const submitBtn = document.getElementById('confirmSubmitBtn');
-    const loadingMsg = document.getElementById('loading-msg');
-    
-    submitBtn.disabled = true;
-    loadingMsg.style.display = 'block';
-
-    try {
-        // Human-readable identifiers
-        const now = new Date();
-        const dateString = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-        const timestamp = Date.now();
-        const baseFileName = `${dateString}_${year}-${sClass}_${name}`;
-        const targetFolder = `${year}-${sClass}_${name}`;
-
-        // 1. Capture Board
-        const canvas = await html2canvas(document.getElementById('submission-template'), { 
-            scale: 1.5, backgroundColor: null, useCORS: true 
-        });
-        const boardBase64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
-        
-        const filesToUpload = [
-            { name: `board_${baseFileName}_${timestamp}.png`, data: boardBase64 }
-        ];
-
-        // 2. Capture uploaded photos
-        const photoElements = document.querySelectorAll('#board .drop-zone img'); 
-        photoElements.forEach((img, index) => {
-            if (img.src && img.src.startsWith('data:image')) {
-                const photoBase64 = img.src.split(',')[1];
-                filesToUpload.push({ 
-                    name: `photo_${index + 1}_${baseFileName}_${timestamp}.png`, 
-                    data: photoBase64 
-                });
+            if (!name || isNaN(year) || isNaN(sClass)) {
+                alert("すべての項目に正しい数字を入力してください。");
+                return;
             }
-        });
-
-        // 3. Upload sequentially
-        for (const file of filesToUpload) {
-            await uploadP(file.name, file.data, 'image/png', targetFolder);
-            await new Promise(resolve => setTimeout(resolve, 600)); 
-        }
-
-        alert("成功！ボードと写真が送信されました。");
-        closeModal();
-    } catch (error) {
-        console.error("Submission error:", error);
-        alert("送信に失敗しました。");
-    } finally {
-        submitBtn.disabled = false;
-        loadingMsg.style.display = 'none';
-    }
-}
-
-        function compressImage(file, maxWidth, maxHeight) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > maxWidth) {
-                                height = Math.round((height * maxWidth) / width);
-                                width = maxWidth;
-                            }
-                        } else {
-                            if (height > maxHeight) {
-                                width = Math.round((width * maxHeight) / height);
-                                height = maxHeight;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const dataUrl = canvas.toDataURL('image/png', 0.3);
-                        resolve(dataUrl.split(',')[1]);
-                    };
-                    img.onerror = reject;
-                };
-                reader.onerror = reject;
+            
+            const liveTitles = document.querySelectorAll('#board .title-text');
+            const templateTitles = document.querySelectorAll('#submission-template .title-text');
+            
+            liveTitles.forEach((liveEl, index) => {
+                if (templateTitles[index]) {
+                    templateTitles[index].innerText = liveEl.innerText;
+                }
             });
+
+            const isConfirmed = confirm(`${name}さん、ボードを保存しますか？`);
+            if (!isConfirmed) return;
+
+            submitBtn.disabled = true;
+            loadingMsg.style.display = 'block';
+
+            const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
+            const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
+
+            try {
+                const templateElement = document.getElementById('submission-template');
+                const canvas = await html2canvas(templateElement, {
+                    scale: 1.5,
+                    backgroundColor: null,
+                    useCORS: true 
+                });
+
+                const dataUrl = canvas.toDataURL('image/png', 0.8);
+                
+                const downloadLink = document.createElement('a');
+                downloadLink.href = dataUrl;
+                downloadLink.download = decodeURIComponent(boardFilename);
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                alert("成功！ボードが保存されました。次のステップで、ロゴフォームに画像ボードをアップロードするのをお忘れなく。自動的に次の画面へ移動します...");
+                closeModal();
+
+                window.location.href = "https://info.logoform.jp/";
+
+            } catch (error) {
+                console.error("Full error object:", error);
+                alert("保存に失敗しました: " + error.message); 
+                submitBtn.disabled = false;
+                loadingMsg.style.display = 'none';
+            }
         }
-
-
-async function uploadP(filename, base64Data, mimeType, folderName) {
-    const AZURE_URL = "https://prod-45.japaneast.logic.azure.com:443/workflows/1f68dcfb4e294a78b56863bd6518df51/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=2lGlPIdtUxJnIO9ydpbrIa_VYNPUYVBcQztv6Lti6vc";
-
-    const response = await fetch(AZURE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            filename: filename,
-            base64Data: base64Data,
-            mimeType: mimeType,
-            folderName: folderName // Ensure this is sent!
-        })
-    });
-    return response;
-}
     </script>
 </body>
 </html>
