@@ -515,8 +515,8 @@
             <p style="color: #666; margin-bottom: 20px;">このフォームに記入してください</p>
 
             <div class="form-group">
-                <label for="studentName">名前のひらがな</label>
-                <input type="text" id="studentName" placeholder="例） 大谷翔平＝ おし" required maxlength="2" pattern="[\u30A1-\u30F6]{2}">
+                <label for="studentName">名前</label>
+                <input type="text" id="studentName" placeholder="例） 大谷翔平">
             </div>
             <div class="form-group">
                 <label for="studentYear">学年</label>
@@ -612,7 +612,7 @@
             submitBtn.disabled = false;
         }
 
-        async function handleSubmission() {
+async function handleSubmission() {
             await document.fonts.ready;
             await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -640,8 +640,11 @@
             submitBtn.disabled = true;
             loadingMsg.style.display = 'block';
 
-            const targetFolder = encodeURIComponent(`${year}-${sClass}_${name}`);
-            const boardFilename = `${targetFolder}_board_${Date.now()}.png`;
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0]; 
+            
+
+            const boardFilename = `${name}_${year}-${sClass}_${dateStr}.png`;
 
             try {
                 const templateElement = document.getElementById('submission-template');
@@ -655,7 +658,7 @@
                 
                 const downloadLink = document.createElement('a');
                 downloadLink.href = dataUrl;
-                downloadLink.download = decodeURIComponent(boardFilename);
+                downloadLink.download = boardFilename;
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
