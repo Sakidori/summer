@@ -298,6 +298,17 @@
             overflow: hidden;
         }
 
+	#student-info-display {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            font-family: 'Comic Neue', cursive;
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            z-index: 10;
+	}
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -479,13 +490,17 @@
         <button class="primary-btn" onclick="location.href='https://info.logoform.jp/'">2.ロゴフォーム</button>
     </div>
 
-    <div id="submission-template">
-        <div class="emoji-decorations">
-            <img src="https://cdn-icons-png.flaticon.com/512/7869/7869045.png" class="emoji-palm" alt="Palm Tree">
-            <img src="https://cdn-icons-png.flaticon.com/512/10484/10484062.png" class="emoji-sun" alt="Sun">
-        </div>
-        <img src="title.png" class="main-title" alt="My Summer Photo Diary">
-        <div id="template-board">
+<div id="submission-template">
+    <div class="emoji-decorations">
+        <img src="https://cdn-icons-png.flaticon.com/512/7869/7869045.png" class="emoji-palm" alt="Palm Tree">
+        <img src="https://cdn-icons-png.flaticon.com/512/10484/10484062.png" class="emoji-sun" alt="Sun">
+    </div>
+    <img src="title.png" class="main-title" alt="My Summer Photo Diary">
+    
+    <div id="student-info-display"></div>
+    
+    <div id="template-board">
+  
             <div class="polaroid">
                 <div class="drop-zone"></div>
                 <div class="title-text"></div>
@@ -613,55 +628,57 @@
         }
 
 async function handleSubmission() {
-            await document.fonts.ready;
-            await new Promise(resolve => setTimeout(resolve, 200));
+    await document.fonts.ready;
+    await new Promise(resolve => setTimeout(resolve, 200));
 
-            const name = document.getElementById('studentName').value.trim();
-            const year = parseInt(document.getElementById('studentYear').value);
-            const sClass = parseInt(document.getElementById('studentClass').value);
+    const name = document.getElementById('studentName').value.trim();
+    const year = parseInt(document.getElementById('studentYear').value);
+    const sClass = parseInt(document.getElementById('studentClass').value);
 
-            if (!name || isNaN(year) || isNaN(sClass)) {
-                alert("すべての項目に正しい数字を入力してください。");
-                return;
-            }
-            
-            const liveTitles = document.querySelectorAll('#board .title-text');
-            const templateTitles = document.querySelectorAll('#submission-template .title-text');
-            
-            liveTitles.forEach((liveEl, index) => {
-                if (templateTitles[index]) {
-                    templateTitles[index].innerText = liveEl.innerText;
-                }
-            });
+    if (!name || isNaN(year) || isNaN(sClass)) {
+        alert("すべての項目に正しい数字を入力してください。");
+        return;
+    }
+    
+    const infoDisplay = document.getElementById('student-info-display');
+    infoDisplay.innerText = `${year}年 ${sClass}組 ${name}さん`;
 
-            const isConfirmed = confirm(`${name}さん、ボードを保存しますか？`);
-            if (!isConfirmed) return;
+    const liveTitles = document.querySelectorAll('#board .title-text');
+    const templateTitles = document.querySelectorAll('#submission-template .title-text');
+    
+    liveTitles.forEach((liveEl, index) => {
+        if (templateTitles[index]) {
+            templateTitles[index].innerText = liveEl.innerText;
+        }
+    });
 
-            submitBtn.disabled = true;
-            loadingMsg.style.display = 'block';
+    const isConfirmed = confirm(`${name}さん、ボードを保存しますか？`);
+    if (!isConfirmed) return;
 
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0]; 
-            
+    submitBtn.disabled = true;
+    loadingMsg.style.display = 'block';
 
-            const boardFilename = `${name}_${year}-${sClass}_${dateStr}.png`;
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; 
+    
+    const boardFilename = `${name}_${year}-${sClass}_${dateStr}.png`;
 
-            try {
-                const templateElement = document.getElementById('submission-template');
-                const canvas = await html2canvas(templateElement, {
-                    scale: 1.5,
-                    backgroundColor: null,
-                    useCORS: true 
-                });
+    try {
+        const templateElement = document.getElementById('submission-template');
+        const canvas = await html2canvas(templateElement, {
+            scale: 1.5,
+            backgroundColor: null,
+            useCORS: true 
+        });
 
-                const dataUrl = canvas.toDataURL('image/png', 0.8);
-                
-                const downloadLink = document.createElement('a');
-                downloadLink.href = dataUrl;
-                downloadLink.download = boardFilename;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
+        const dataUrl = canvas.toDataURL('image/png', 0.8);
+        
+        const downloadLink = document.createElement('a');
+        downloadLink.href = dataUrl;
+        downloadLink.download = boardFilename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
 
                 alert("成功！ボードが保存されました。次のステップで、ロゴフォームに画像ボードをアップロードするのをお忘れなく。自動的に次の画面へ移動します...");
                 closeModal();
